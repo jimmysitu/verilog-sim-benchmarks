@@ -38,23 +38,43 @@
 module bench;
 
    reg 	       clk,arbclk_i,rst;
+   wire [31:0] dat_i;
    
    k68_soc_test k68_soc_test
      (/*AUTOINST*/
+      // Outputs
+      .dat_i				(dat_i[31:0]),
       // Inputs
       .clk				(clk),
       .rst				(rst),
       .arbclk_i				(arbclk_i)); 
    
 
+   integer     cycles;
+   integer     ign;
+
+   reg [31:0]  sum;
+
+   initial sum = 0;
+   always @ (posedge clk) sum <= sum^dat_i;
+
    initial begin
+      cycles = 0;
+      ign = $value$plusargs("CYCLES=%d", cycles);
+      if (!cycles) begin
+	 $display("%%Error: +CYCLES=# not specified on command line");
+	 $stop;
+      end
+      $display("Runtime = %0d cycles", cycles);
+
       //$dumpfile("foo.vcd");
       //$dumpvars(99,bench);
       clk = 1;
       arbclk_i = 1;
       rst = 0;
       #40 rst = 1;
-      #100000000;
+      #(cycles*10);
+      $write("Final sum = %x\n", sum);  // so simulators won't rip out all logic
       $finish;
    end
    

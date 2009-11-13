@@ -11,23 +11,12 @@
 #
 #*****************************************************************************
 
-default:
-	@echo "Please run 'make vl', 'make nc', 'make vcs', or 'make icarus'"
-	false
+default: help
 
 PWD := $(shell pwd)
+BENCHMARKER := perl benchmarker
 
 COMMON_FLAGS = -f ../input.vc
-NC_FLAGS  = $(COMMON_FLAGS) \
-	+ncsimargs+-status +nowarn+LIBNOU -q ../bench/bench.v
-VCS_FLAGS = $(COMMON_FLAGS) \
-	+twostate +define+vcs+1 ../bench/bench.v
-VL_FLAGS  = $(COMMON_FLAGS) \
-	--cc ../bench/k68_soc_test.v --exe $(PWD)/../bench/bench.cpp  -prefix m68 -Wno-WIDTH \
-	-O3 -x-assign 0
-ICARUS_FLAGS = $(COMMON_FLAGS) \
-	-o simi \
-	../bench/bench.v
 VCOMP_FLAGS = $(COMMON_FLAGS) \
 	-o simvc \
 	$(wildcard ../bench/*.v) \
@@ -61,8 +50,6 @@ VCOMP_FLAGS = $(COMMON_FLAGS) \
 VBS_FLAGS = -o simi -y ../bench -y ../rtl \
 	-I../bench -I../rtl \
 	../bench/bench.v
-CVER_FLAGS = $(COMMON_FLAGS) \
-	../bench/bench.v
 
 ######################################################################
 
@@ -80,84 +67,147 @@ export OPT_FAST
 export OPT_SLOW
 export LDFLAGS
 
-vl:  vl_v vl_compile vl_sim
-vl_v: 
-	$(VERILATOR_ROOT)/bin/verilator $(VL_FLAGS)
-vl_compile:
-	( cd obj_dir ; make -f m68.mk )
-vl_sim:
-	time obj_dir/m68  10000000
+######################################################################
+machine:
+	@uname -a
+	@cat /etc/*release
+	@gcc --version | head
+	@grep -i 'model name' /proc/cpuinfo
+	@lshw
+
+######################################################################
+
+VERILATOR = $(VERILATOR_ROOT)/bin/verilator
+VERILATOR_VERSION = $(shell $(VERILATOR) --version)
+VERILATOR_FLAGS  = $(COMMON_FLAGS) \
+	--cc ../bench/k68_soc_test.v --exe $(PWD)/../bench/bench.cpp  -prefix m68 -Wno-WIDTH \
+	-O3 -x-assign 0
+
+ALL_SIMS += vl-32
+vl-32: 
+	$(VERILATOR) $(VERILATOR_FLAGS)
+	( cd obj_dir ; rm *.o ; make -j -f m68.mk LDFLAGS=-m32 OPT_FAST="-m32 -O3" OPT_SLOW="-m32 -O3" )
+	$(BENCHMARKER) "$@ $(VERILATOR_VERSION)" "obj_dir/m68 %c"
+
+ALL_SIMS += vl-64
+vl-64:
+	$(VERILATOR) $(VERILATOR_FLAGS)
+	( cd obj_dir ; rm *.o ; make -j -f m68.mk LDFLAGS=-m64 OPT_FAST="-m64 -O3" OPT_SLOW="-m64 -O3" )
+	$(BENCHMARKER) "$@ $(VERILATOR_VERSION)" "obj_dir/m68 %c"
 
 m68.gprof:  vl
 	gprof obj_dir/m68 > $@
 
-vl_waves:
+vl-waves:
 	$(VERILATOR_ROOT)/bin/verilator --trace $(VL_FLAGS)
 	( cd obj_dir ; make -f m68.mk )
 	time obj_dir/m68 -l sim.log
 
 ######################################################################
 
-novcs:
-	@echo "No VCS simulator installed."
-	@echo "Not running VCS regression test."
+VCS = vcs
+VCS_VERSION = $(shell vcs -ID 2>&1 | grep 'version =')
+VCS_FLAGS = $(COMMON_FLAGS) \
+	+define+vcs+1 ../bench/bench.v
 
-vcs:
-	vcs $(VCS_FLAGS)
-	time ./simv -l sim.log
+ALL_SIMS += vcs-32-2state
+vcs-32-2state:
+	-rm -rf csrc simv.daidir
+	$(VCS) $(VCS_FLAGS)
+	$(BENCHMARKER) "$@ $(VCS_VERSION)" "./simv +CYCLES=%c +2state"
 
-vcs_waves:
-	vcs +cli -I $(VCS_FLAGS)
+ALL_SIMS += vcs-64-2state
+vcs-64-2state:
+	-rm -rf csrc simv.daidir
+	$(VCS) $(VCS_FLAGS) -full64
+	$(BENCHMARKER) "$@ $(VCS_VERSION)" "./simv +CYCLES=%c +2state"
+
+ALL_SIMS += vcs-32-4state
+vcs-32-4state:
+	-rm -rf csrc simv.daidir
+	$(VCS) $(VCS_FLAGS)
+	$(BENCHMARKER) "$@ $(VCS_VERSION)" "./simv +CYCLES=%c"
+
+ALL_SIMS += vcs-64-4state
+vcs-64-4state:
+	-rm -rf csrc simv.daidir
+	$(VCS) $(VCS_FLAGS) -full64
+	$(BENCHMARKER) "$@ $(VCS_VERSION)" "./simv +CYCLES=%c"
+
+vcs-waves:
+	$(VCS) +cli -I $(VCS_FLAGS)
 	time ./simv -l sim.log
 
 ######################################################################
 
-nonc:
-	@echo "No NC-Verilog simulator installed."
-	@echo "Not running NC-Verilog regression test."
+NCVERILOG = ncverilog
+NC_VERSION = $(shell $(NCVERILOG) -version)
+NC_FLAGS  = $(COMMON_FLAGS) \
+	+ncsimargs+-status +nowarn+LIBNOU -q ../bench/bench.v
+NC_RUN_FLAGS = -R
 
-nc:
-	time ncverilog $(NC_FLAGS)
+ALL_SIMS += nc-32
+nc-32:
+	$(NCVERILOG) $(NC_FLAGS) -c
+	$(BENCHMARKER) "$@ $(NC_VERSION)" "$(NCVERILOG) $(NC_RUN_FLAGS) +CYCLES=%c"
 
-nc_waves:
+ALL_SIMS += nc-64
+nc-64:
+	$(NCVERILOG) $(NC_FLAGS) +nc64bit -c
+	$(BENCHMARKER) "$@ $(NC_VERSION)" "$(NCVERILOG) $(NC_RUN_FLAGS) +CYCLES=%c +nc64bit"
+
+nc-waves:
 	time ncverilog +access+rc $(NC_FLAGS)
 
 ######################################################################
 
-noicarus:
-	@echo "No Icarus-Verilog simulator installed."
-	@echo "Not running Icarus-Verilog regression test."
+IVERILOG = iverilog
+ICARUS_VERSION = $(shell $(IVERILOG) -V 2>&1 | head -1)
+ICARUS_FLAGS = $(COMMON_FLAGS) \
+	-o simi \
+	../bench/bench.v
 
+ALL_SIMS += icarus
 icarus:
-	time iverilog $(ICARUS_FLAGS)
-	time vvp simi
+	time $(IVERILOG) $(ICARUS_FLAGS)
+	$(BENCHMARKER) "icarus $(ICARUS_VERSION)" "./simi +CYCLES=%c"
 
+######################################################################
+
+ALL_SIMS += vcomp
 vcomp:
 	time ~/src/verilator/vcomp-my/src/vcomp  $(VCOMP_FLAGS)
 	./simvc
 
 ######################################################################
 
-novbs:
-	@echo "No Vbs simulator installed."
-	@echo "Not running Vbs regression test."
-
+ALL_SIMS += vbs
 vbs: 
 	@echo "Need .vpp files made by vl"
 	time vbs obj_dir/*.vpp
 
 ######################################################################
 
-nocver:
-	@echo "No Cver simulator installed."
-	@echo "Not running Cver regression test."
+CVER = cver
+CVER_VERSION = $(shell $(CVER) -V 2>&1 | head -1)
+CVER_FLAGS = $(COMMON_FLAGS) \
+	+verbose \
+	../bench/bench.v
 
+ALL_SIMS += cver
 cver: 
-	time cver $(CVER_FLAGS)
+	$(BENCHMARKER) "$(CVER) $(CVER_VERSION)" "$(CVER) $(CVER_FLAGS) +CYCLES=%d"
 
 ######################################################################
 
+help:
+	@echo "Please make one of the below targets (not in parallel):"
+	@echo "   machine     Show machine information"
+	@echo "   clean       Remove temp files"
+	@echo $(ALL_SIMS)
+	false
+
 maintainer-copy::
 clean mostlyclean distclean maintainer-clean::
-	-rm -rf obj_dir *.log *.dmp *.vpd simv* vcs.key csrc INCA_libs simi
+	-rm -rf obj_dir *.log *.dmp *.vpd simv* vcs.key csrc INCA_libs simi .vcsmx_rebuild
 

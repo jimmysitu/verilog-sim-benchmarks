@@ -1,0 +1,108 @@
+#!/usr/bin/perl -w
+use strict;
+
+my @args = @ARGV;
+
+# USAGE:
+#   benchmarker [-elapsed]  <simulator_name_for_report>  <program>
+#   <program> should specify %c as the number of cycles to run
+#
+my $opt_elapsed;  if ($args[0] =~ /-elapsed/) { $opt_elapsed=1; shift @args; }
+
+my $sim = $args[0] or die "%Error: No simulator specified,";
+$sim =~ s/\n.*$//;
+$sim =~ s/[ \n\t]+/ /g;
+my $cmd = $args[1] or die "%Error: No command specified,";
+
+sim_ramp($cmd);
+
+sub sim_ramp {
+    my $cmd = shift;
+
+    print "Finding baseline\n";
+    my $basetime1 = sim ($cmd, 1);
+    my $basetime2 = sim ($cmd, 1);
+    my $basetime3 = sim ($cmd, 1);
+    my $basetime = min($basetime1, $basetime2, $basetime3);
+
+    my ($cycles1, $cps1) = sim_experiment ($cmd, $basetime, 0);
+    my ($cycles2, $cps2) = sim_experiment ($cmd, $basetime, $cycles1);
+    my ($cycles3, $cps3) = sim_experiment ($cmd, $basetime, $cycles1);
+    my $cps = max($cps1,$cps2,$cps3);
+    
+    print "****Final: $sim    $cmd    $cps cycles/second\n";
+}
+
+sub sim_experiment {
+    my $cmd = shift;
+    my $basetime = shift;
+    my $force_cycles = shift;
+
+    print "Experiment\n";
+    my $aim_for_runtime = 30;
+    my $min_runtime = 10;
+
+    my $cycles = 10000;
+    $cycles = $force_cycles if $force_cycles;
+    while (1) {
+	my $time = sim($cmd, $cycles+1);
+	my $delta = $time - $basetime;
+
+	if ($delta < 1) {  # Not enough runtime, ramp up.
+	    $cycles *= 4;
+	    next;
+	}
+
+	my $cps = int($cycles/$delta);
+	print " *Experiment:  $delta seconds, $cps cycles/second\n";
+	if ($delta > $min_runtime || $force_cycles) {   # Long enough
+	    return ($cycles, $cps);
+	}
+
+	my $aim_cycles = int($aim_for_runtime * $cps + 1);
+	$cycles *= 4;  # Make sure each loop runs longer
+	$cycles = $aim_cycles if ($cycles < $aim_cycles);
+    }
+}
+
+our $N;
+
+sub sim {
+    my $cmd = shift;
+    my $cycles = shift;
+
+    $cmd =~ s/%c/$cycles/g;
+
+    $N++;
+    print "  Run".$N." $cmd\n";
+    if ($N > 50) {
+	die "%Error: Too many trials; perhaps time or cycle count not working?\n";
+    }
+
+    my $result = `time $cmd 2>&1`;
+    my $status = $?;
+    print "    ".join("\n    ",split(/\n/,"$result")),"\n";
+    ($status == 0) or die "%Error: Command Failed $cmd, $status, stopped";
+
+    if ($opt_elapsed) {
+	$result =~ /(\d+):([0-9.]+)elapsed/ or die "%Error: No elapsed time found\n";
+	return $1*60+$2;
+    } else {
+	$result =~ /\n([0-9.]+)user/ or die "%Error: No time found\n";
+	return $1;
+    }
+}
+
+sub min {
+    my $min = $_[0];
+    foreach my $v (@_) { $min=$v if $v<$min; }
+    return $min;
+}
+
+sub max {
+    my $max = $_[0];
+    foreach my $v (@_) { $max=$v if $v>$max; }
+    return $max;
+}
+
+

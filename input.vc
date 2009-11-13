@@ -1,4 +1,4 @@
-+librescan +libext+.v 
++libext+.v 
  -y ../bench
  -y ../rtl
  +incdir+../bench

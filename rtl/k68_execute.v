@@ -122,7 +122,7 @@ module k68_execute (/*AUTOARG*/
    input [1:0] 	   skip_i;
         
    reg [dw-1:0]    res_o;
-   reg [sw-1:0]    ccr_o, ssr_o;
+   reg [7:0]       ccr_o, ssr_o;
    reg [kw-1:0]    add_c_o, add_c;
    reg [lw-1:0]    alu_o, alu;
    reg [aw-1:0]    pc_o, pc;
