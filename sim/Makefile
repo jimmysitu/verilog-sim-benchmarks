@@ -1,11 +1,8 @@
-# $Revision: 1.4 $$Date: 2003/09/22 14:06:09 $$Author: wsnyder $ -*- Makefile -*-
 #*****************************************************************************
 #
-# DESCRIPTION: Verilator Example: Makefile for inside object directory
+# DESCRIPTION: verilog-sim-benchmarks Makefile
 #
-# This executed in the object directory, and called by ../Makefile
-#
-# Copyright 2004 by Wilson Snyder. This program is free software; you can
+# Copyright 2006-2009 by Wilson Snyder. This program is free software; you can
 # redistribute it and/or modify it under the terms of either the GNU
 # General Public License or the Perl Artistic License.
 #
@@ -196,7 +193,43 @@ CVER_FLAGS = $(COMMON_FLAGS) \
 
 ALL_SIMS += cver
 cver: 
-	$(BENCHMARKER) "$(CVER) $(CVER_VERSION)" "$(CVER) $(CVER_FLAGS) +CYCLES=%d"
+	$(BENCHMARKER) "$(CVER) $(CVER_VERSION)" "$(CVER) $(CVER_FLAGS) +CYCLES=%c"
+
+######################################################################
+
+CVC = cvc
+CVC64 = cvc64
+CVC_VERSION = $(shell $(CVC) -V 2>&1 | head -1)
+#cvc regular optimize -O
+CVC_FLAGS = $(COMMON_FLAGS) -O +verbose ../bench/bench.v
+#cvc regular -O +nbaopt
+CVC_NBAOPT_FLAGS = $(COMMON_FLAGS) -O +nbaopt +verbose ../bench/bench.v
+#cvc interpreter
+CVC_INTERP_FLAGS = $(COMMON_FLAGS) +verbose +interp ../bench/bench.v
+
+ALL_SIMS += cvc
+cvc: 
+	time $(CVC) $(CVC_FLAGS)
+	$(BENCHMARKER) "$(CVC) $(CVC_VERSION)" "cvcsim +CYCLES=%c"
+
+cvc_nbaopt: 
+	time $(CVC) $(CVC_NBAOPT_FLAGS)
+	$(BENCHMARKER) "$(CVC) $(CVC_VERSION)" "cvcsim +CYCLES=%c"
+
+ALL_SIMS += cvc64
+cvc64: 
+	time $(CVC64) $(CVC_FLAGS)
+	$(BENCHMARKER) "$(CVC64) $(CVC_VERSION)" "cvcsim +CYCLES=%c"
+
+cvc_nbaopt64: 
+	time $(CVC64) $(CVC_NBAOPT_FLAGS)
+	$(BENCHMARKER) "$(CVC64) $(CVC_VERSION)" "cvcsim +CYCLES=%c"
+
+cvc_interp: 
+	$(BENCHMARKER) "$(CVC) $(CVC_VERSION)" "$(CVC) $(CVC_INTERP_FLAGS) +CYCLES=%c"
+
+cvc_interp64: 
+	$(BENCHMARKER) "$(CVC64) $(CVC_VERSION)" "$(CVC64) $(CVC_INTERP_FLAGS) +CYCLES=%c"
 
 ######################################################################
 
