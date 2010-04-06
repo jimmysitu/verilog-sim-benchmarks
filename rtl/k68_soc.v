@@ -71,7 +71,7 @@ module k68_soc (/*AUTOARG*/
    wire		   rst;
    wire [31:0] 	   d_dat_o,d_dat_i;
          
-   wire		   arbclk = clk_i;
+   wire		   arbclk = arbclk_i;
 
    assign 	   add_o = m_add_o;
    assign 	   dat_o = m_dat_o;
