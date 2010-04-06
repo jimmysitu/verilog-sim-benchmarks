@@ -26,6 +26,7 @@
 
 #include <verilated.h>
 #include <fstream>
+#include <iostream>
 #include <iomanip>
 #include <sys/times.h>
 using namespace std;
