@@ -1800,7 +1800,14 @@ assign get_ab_o  = valid_trx;
 	 pc_o = 0;
 	 // End of automatics
 	 
-      end else begin // if (rst_i)
+      end else if (brch) begin // if (rst_i)
+
+	 brch_o = 1'b0;
+	 pc_o = xxxx;
+	 add_c_o = esc;
+	 dat_c_o = xxxx;
+
+      end else begin
 	 c_siz_o = siz_i;
 	 
 	 case (add_c_i)
@@ -1846,8 +1853,7 @@ assign get_ab_o  = valid_trx;
 	      pc_o = xxxx;
 	   end
 	   
-	   default: 
-	     if (~brch) begin
+	   default: begin
 		brch_o = 1'b0;
 		pc_o = xxxx;
 		
@@ -1862,16 +1868,11 @@ assign get_ab_o  = valid_trx;
 		     dat_c_o = res_i;
 		  end
 		endcase // case(alu_i)
-	     end else begin
-		add_c_o = esc;
-		dat_c_o = xxxx;
-		brch_o = 1'b0;
-		pc_o = zero;
-	     end // else: !if(~brch)
+	   end
 	   
 	 endcase // case(add_c_i)
 	 
-      end // else: !if(rst_i)
+      end // else: !if(brch)
       
    end // always @ (...
 
