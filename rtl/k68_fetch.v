@@ -37,9 +37,9 @@
   
 module k68_fetch (/*AUTOARG*/
    // Outputs
-   p_cs_o, p_add_o, pc_o, op_o, imm_o, 
+   p_cs_o, p_add_o, pc_o, op_o, imm_o, f2d_vld_o,
    // Inputs
-   p_dat_i, cpu_clk_i, mem_clk_i, rst_i, brch_i, pc_i
+   p_dat_i, cpu_clk_i, mem_clk_i, rst_i, brch_i, f2d_rdy_i, pc_i
    ) ;
    parameter dw = `k68_DATA_W;
    parameter aw = `k68_ADDR_W;
@@ -50,13 +50,15 @@ module k68_fetch (/*AUTOARG*/
                
    input [ow-1:0] p_dat_i;
    input 	    cpu_clk_i,mem_clk_i,rst_i, brch_i;
+   input 	    f2d_rdy_i;
+   output 	    f2d_vld_o;
    output 	    p_cs_o;//, rdy_o;
    output [aw-1:0]  p_add_o, pc_o;
    input [aw-1:0]   pc_i;
    output [ow-1:0] op_o;
    output [dw-1:0]   imm_o;
 
-   reg 		     rdy;
+   reg 		     rdy, stall, f2d_vld_o;
    reg [ow-1:0]      op_o,immh_o,imml_o, tmpa,tmpb,tmpc,tmpd;
 
    // Internal State Counters Assume it takes 4 counts to read data
@@ -88,7 +90,7 @@ module k68_fetch (/*AUTOARG*/
 	 pc <= reset;
 	 op_o <= nop;
 	 	 
-      end else begin
+      end else if (!stall) begin
 	 if (rdy) begin
 	    case (cpu_cnt)
 	   
@@ -144,7 +146,7 @@ module k68_fetch (/*AUTOARG*/
 	    
 	 end // else: !if(brch_i)
 
-      end
+      end // if (!stall)
       
    end
 
@@ -152,12 +154,9 @@ module k68_fetch (/*AUTOARG*/
    //
    //  RDY FLAG
    //
-   always @ (/*AUTOSENSE*/brch_i or p_add_o or pc or rst_i) begin
-      if (rst_i || brch_i) begin
-	 /*AUTORESET*/
-	 // Beginning of autoreset for uninitialized flops
-	 rdy = 0;
-	 // End of automatics
+   always @ (/*AUTOSENSE*/brch_i or p_add_o or pc) begin
+      if (brch_i) begin
+	 rdy = 1'b0;
       end else if (p_add_o[3:1] - pc[3:1] == 3'd3) begin
 	 rdy = 1'b1;
       end else begin
@@ -165,6 +164,30 @@ module k68_fetch (/*AUTOARG*/
 	 	 
       end
     
+   end // always @ (...
+
+
+   //
+   //  VALID for Fetch2Decode interactions
+   //
+   always @ (posedge cpu_clk_i) begin
+      if (rst_i) begin
+	 f2d_vld_o <= 1'b0;
+      end else begin
+	 f2d_vld_o <= rdy;
+      end
+    
+   end // always @ (...
+
+   //
+   //  STALL FLAG
+   //
+   always @ (/*AUTOSENSE*/f2d_vld_o or f2d_rdy_i) begin
+      if (f2d_vld_o && !f2d_rdy_i) begin
+	 stall = 1'b1;
+      end else begin
+	 stall = 1'b0;
+      end
    end // always @ (...
 
 
@@ -181,21 +204,19 @@ module k68_fetch (/*AUTOARG*/
    //
    always @(posedge mem_clk_i) begin
       if (rst_i) begin
-	 /*AUTORESET*/
-	 // Beginning of autoreset for uninitialized flops
 	 mem_cnt <= 0;
-	 tmpa <= 0;
-	 tmpb <= 0;
-	 tmpc <= 0;
-	 tmpd <= 0;
-	 // End of automatics
-
+      end else begin
+	 mem_cnt <= mem_cnt + 1'd1;
+      end
+   end
+     
+   always @(posedge mem_clk_i) begin
+      if (rst_i) begin
 	 tmpa <= nop;
 	 tmpb <= nop;
 	 tmpc <= nop;
 	 tmpd <= nop;
-	 	 
-      end else begin
+      end else if (!stall) begin
 	  	 
 	 if (mem_cnt == 2'b00) begin
 	    case (cpu_cnt)
@@ -203,7 +224,6 @@ module k68_fetch (/*AUTOARG*/
 	      2'b01: tmpa <= s_dat_i;
 	      2'b10: tmpb <= s_dat_i;
 	      2'b11: tmpc <= s_dat_i;
-	      
 	    endcase // case(cpu_cnt)
 	    
 	 end
@@ -213,14 +233,9 @@ module k68_fetch (/*AUTOARG*/
 	    tmpa <= nop;
 	    tmpc <= nop;
 	    tmpb <= nop;
-	    
 	 end
 	 
-	 mem_cnt <= mem_cnt + 1'd1;
-	 
-      end
-      
-      
+      end // if (!stall)
    end
      
    

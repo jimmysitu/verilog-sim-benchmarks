@@ -38,11 +38,11 @@
 module k68_decode (/*AUTOARG*/
    // Outputs
    alu_o, src_o, dst_o, skip_o, brch_o, pc_o, alu_pc_o, c_siz_o, 
-   imm_o, add_a_o, add_b_o, add_c_o, add_src_o, add_dst_o, dat_c_o, 
-   siz_o, siz_a_o, 
+   imm_o, get_ab_o, add_a_o, add_b_o, add_c_o, add_src_o, add_dst_o, dat_c_o, 
+   siz_o, siz_a_o, f2d_rdy_o,
    // Inputs
    clk_i, rst_i, pc_i, op_i, imm_i, alu_i, res_i, alu_pc_i, siz_i, 
-   add_c_i, dat_a_i, dat_b_i, dat_c_i, skip_i
+   add_c_i, dat_a_i, dat_b_i, dat_c_i, skip_i, f2d_vld_i
    ) ;
    
    parameter dw=`k68_DATA_W;
@@ -127,7 +127,11 @@ module k68_decode (/*AUTOARG*/
    output [1:0]    c_siz_o;
    reg [1:0] 	   c_siz_o;
    output [dw-1:0] imm_o;
+
+   input           f2d_vld_i;
+   output          f2d_rdy_o;
       
+   output          get_ab_o;
    output [kw-1:0]    add_a_o, add_b_o, add_c_o, add_src_o, add_dst_o; // @modes
    input [kw-1:0]     add_c_i;
    input [dw-1:0]  dat_a_i, dat_b_i, dat_c_i;
@@ -152,8 +156,38 @@ module k68_decode (/*AUTOARG*/
    reg [kw-1:0]    add_src, add_dst;
    reg 		   brch;
 
+   reg [1:0]       regfile_ilock_cnt;
+   wire            valid_trx, ilock_o, add_a_mode34, add_b_mode34;
+
    //assign 	   dst_o = dat_b_i;
       
+   //
+   // Interlock whenever pre-incrementing or post-incrementing addressing modes are
+   // used for the source operands.  This prevents the decode stage from reading
+   // stale address registers that are updated the clock after execute (2 clks later).
+   //
+   always @ (posedge clk_i) begin
+      
+      if (rst_i) begin
+	 regfile_ilock_cnt <= 2'b00;
+      end else if (valid_trx) begin
+         regfile_ilock_cnt <= 2'b10;
+      end else if (|regfile_ilock_cnt[1:0]) begin
+         regfile_ilock_cnt <= (regfile_ilock_cnt >> 1);
+      end
+      
+   end // always @ (posedge clk_i)
+
+assign add_a_mode34 = (add_a_o[5:3]==3'd3) || (add_a_o[5:3]==3'd4);
+assign add_b_mode34 = (add_b_o[5:3]==3'd3) || (add_b_o[5:3]==3'd4);
+
+assign ilock_o   = f2d_vld_i & (add_a_mode34 | add_b_mode34) & (|regfile_ilock_cnt);
+assign f2d_rdy_o = !ilock_o || brch_o;
+assign valid_trx = f2d_vld_i && f2d_rdy_o && !skip[1] && !skip[0] && !brch_o;
+assign get_ab_o  = valid_trx;
+   
+   
+   
    //
    // Synchronous to EXECS
    // DECODE STAGE
@@ -161,7 +195,7 @@ module k68_decode (/*AUTOARG*/
    //
    always @ (posedge clk_i) begin
       
-      if (rst_i || skip[0] || skip[1] || brch_o) begin
+      if (rst_i || !valid_trx) begin
 	 /*AUTORESET*/
 	 // Beginning of autoreset for uninitialized flops
 	 add_dst_o <= 0;
@@ -181,7 +215,7 @@ module k68_decode (/*AUTOARG*/
 	 skip <= skip_i;
 	 brch <= brch_o;
 	 
-      end else begin // if (rst_i || skip[0] || skip[1] || brch_o)
+      end else begin // if (rst_i || !valid_trx)
 	 
 	 brch <= brch_o;
 	 skip <= skip_i;
@@ -194,7 +228,7 @@ module k68_decode (/*AUTOARG*/
 	 add_dst_o <= add_dst;
 	 alu_pc_o <= pc_i;
 	 
-      end // else: !if(rst_i || skip[0] || skip[1] || brch_o)
+      end // else: !if(rst_i || !valid_trx)
       
    end // always @ (posedge clk_i)
    
@@ -213,8 +247,8 @@ module k68_decode (/*AUTOARG*/
    // add_a_o, add_b_o, siz_a_o, imm_o
    //
    always @(/*AUTOSENSE*/dat_a_i or dat_c_i or imm_i or op or op_i
-	    or rst_i or skip) begin
-      if (rst_i || skip[1] || skip[0]) begin
+          or f2d_vld_i or skip) begin
+      if (!f2d_vld_i || skip[1] || skip[0]) begin
 	 /*AUTORESET*/
 	 // Beginning of autoreset for uninitialized flops
 	 add_a_o = 0;
@@ -230,7 +264,7 @@ module k68_decode (/*AUTOARG*/
 	 add_a_o = esc;
 	 add_b_o = esc;
 
-      end else begin // if (rst_i || skip[1] || skip[0])
+      end else begin // if (!f2d_vld_i || skip[1] || skip[0])
 	 
 	 add_a_o = esc;
 	 add_b_o = esc;
@@ -1738,7 +1772,7 @@ module k68_decode (/*AUTOARG*/
 	   siz_a_o = 2'bxx;
 	end
       endcase // case(op_i[15:12])
-      end // else: !if(rst_i || skip[1] || skip[0])
+      end // else: !if(!f2d_vld_i || skip[1] || skip[0])
             
    end // always @ (...
 

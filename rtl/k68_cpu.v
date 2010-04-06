@@ -72,6 +72,7 @@ module k68_cpu (/*AUTOARG*/
    wire [lw-1:0]   d_alu_o;
    wire [dw-1:0]   d_src_o, d_dst_o;
    wire 	   d_run_o,d_brch_o;
+   wire 	   f2d_vld, f2d_rdy, d_get_ab_o;
    wire [1:0] 	   d_skip_o;
    wire [aw-1:0]   d_pc_o;
    wire [kw-1:0]   d_add_a_o, d_add_b_o, d_add_c_o, d_add_src_o, d_add_dst_o;
@@ -150,6 +151,8 @@ module k68_cpu (/*AUTOARG*/
 		     .p_cs_o(p_cs_o),
 		     .pc_o(f_pc_o),
 		     .brch_i(d_brch_o),
+		     .f2d_vld_o(f2d_vld),
+		     .f2d_rdy_i(f2d_rdy),
 		     .op_o(f_op_o),
 		     .imm_o(f_imm_o),
 		     .pc_i(d_pc_o)
@@ -170,6 +173,7 @@ module k68_cpu (/*AUTOARG*/
 		     .r_we_o(a_we_o),
 		     .rd_dat_o(a_rd_dat_o),
 		     
+		     .get_ab_i(d_get_ab_o),
 		     .dat_c_i(d_dat_c_o),
 		     .add_a_i(d_add_a_o),
 		     .add_b_i(d_add_b_o),
@@ -236,6 +240,9 @@ module k68_cpu (/*AUTOARG*/
 		       .siz_i(e_siz_o),
 		       .c_siz_o(c_siz_o),
 		       
+		       .f2d_vld_i(f2d_vld),
+		       .f2d_rdy_o(f2d_rdy),
+
 		       .alu_o(d_alu_o),
 		       .src_o(d_src_o),
 		       .dst_o(d_dst_o),
@@ -244,6 +251,7 @@ module k68_cpu (/*AUTOARG*/
 		       .pc_o(d_pc_o),
 		       .alu_pc_o(d_alu_pc_o),
 		       
+		       .get_ab_o(d_get_ab_o),
 		       .add_a_o(d_add_a_o),
 		       .add_b_o(d_add_b_o),
 		       .add_c_o(d_add_c_o),
