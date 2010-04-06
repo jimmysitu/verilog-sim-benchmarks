@@ -204,7 +204,7 @@ module k68_cpu (/*AUTOARG*/
 			.add_dst_i(d_add_dst_o),
 			.siz_i(d_siz_o),
 
-			.skip_i(a_skip_o),
+			.skip_i(d_skip_o),
 			.clk_i(clk4_i), .rst_i(rst_o)
 			);
  
