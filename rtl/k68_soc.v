@@ -65,7 +65,7 @@ module k68_soc (/*AUTOARG*/
    wire 	   m_cs_o;
    
  	    
-   wire [9:0] 	   a_dat_i, b_dat_i;
+   wire [7:0] 	   a_dat_i, b_dat_i;
    wire 	   r_cs_o, r_we_o, a_cs_o, b_cs_o, a_we_o, b_we_o; 	    
 
    wire		   rst;
@@ -132,14 +132,11 @@ module k68_soc (/*AUTOARG*/
    // k68_sasc
    //
 
-   wire [7:0] 	   brg0,brg1;
-   assign 	   brg0 = `k68_div0;
-   assign 	   brg1 = `k68_div1;
-      
    k68_sasc uart0(
 		  .tx_o(tx_o[0]),
 		  .rts_o(rts_o[0]),
-		  .dat_i({brg1,brg0,m_dat_o[7:0]}),
+		  .add_i(m_add_o[15:0]),
+		  .dat_i(m_dat_o[7:0]),
 		  .dat_o(a_dat_i),
 		  .cts_i(cts_i[0]),
 		  .rx_i(rx_i[0]),
@@ -151,7 +148,8 @@ module k68_soc (/*AUTOARG*/
    k68_sasc uart1(
 		  .tx_o(tx_o[1]),
 		  .rts_o(rts_o[1]),
-		  .dat_i({brg1,brg0,m_dat_o[7:0]}),
+		  .add_i(m_add_o[15:0]),
+		  .dat_i(m_dat_o[7:0]),
 		  .dat_o(b_dat_i),
 		  .cts_i(cts_i[1]),
 		  .rx_i(rx_i[1]),

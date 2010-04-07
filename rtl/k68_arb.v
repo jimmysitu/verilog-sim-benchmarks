@@ -86,12 +86,12 @@ module k68_arb (/*AUTOARG*/
    reg 		   g_we_o, g_cs_o;
    
    // UART A
-   input [9:0] 	   a_dat_i;
+   input [7:0] 	   a_dat_i;
    output 	   a_we_o, a_cs_o;
    reg 		   a_we_o, a_cs_o;
    
    // UART B
-   input [9:0] 	   b_dat_i;
+   input [7:0] 	   b_dat_i;
    output 	   b_we_o, b_cs_o;
    reg 		   b_we_o, b_cs_o;
    

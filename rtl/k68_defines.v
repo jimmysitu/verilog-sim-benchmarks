@@ -89,6 +89,10 @@
 //`define k68_div1        8'd217
 `define k68_div0        8'd1
 `define k68_div1        8'd217
+`define k68_UART_ADR_DATA  	16'h0000
+`define k68_UART_ADR_STATUS	16'h0001
+`define k68_UART_ADR_BRG0  	16'h0002
+`define k68_UART_ADR_BRG1  	16'h0003
 
 //
 // K68 Widths
