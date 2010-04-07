@@ -57,7 +57,7 @@ module k68_soc (/*AUTOARG*/
    output 	   clk_o;
    output 	   rst_o;
         
-   wire 	   cs;
+   wire 	   cs_o;
    wire [aw-1:0]   m_add_o;
    wire [dw-1:0]   m_dat_o;
    wire [dw-1:0]   m_dat_i;
@@ -75,7 +75,6 @@ module k68_soc (/*AUTOARG*/
 
    assign 	   add_o = m_add_o;
    assign 	   dat_o = m_dat_o;
-   assign 	   we_o = r_we_o;
  
    wire 	   unused_g_we_o;
    wire 	   unused_g_cs_o;
@@ -84,14 +83,15 @@ module k68_soc (/*AUTOARG*/
    // Arbiter
    //
    k68_arb arb0 (
-		 .m_we_o(r_we_o),
-		 .m_cs_o(r_cs_o),
-		 .m_dat_i(dat_i),
+		 .r_we_o(we_o),
+		 .r_cs_o(cs_o),
+		 .r_dat_i(dat_i),
 		 
 		 .a_dat_i(a_dat_i),
 
 		 .b_dat_i(b_dat_i),
 		 
+		 .m_cs_i(m_cs_o),
 		 .m_add_i(m_add_o),
 		 .m_we_i(m_we_o),
 		 .m_dat_o(m_dat_i),
@@ -117,10 +117,10 @@ module k68_soc (/*AUTOARG*/
 		.add_o(m_add_o),
 		.dat_o(m_dat_o),
 		.dat_i(m_dat_i),
+		.cs_o(m_cs_o),
 		.we_o(m_we_o),
 		
 		.int_i(int_i),
-		.cs_o(cs),
 		.clk_o(clk_o), .rst_o(rst_o),
 		.clk_i(clk_i), .rst_i(rst_i)
 		);

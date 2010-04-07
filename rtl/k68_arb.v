@@ -51,9 +51,9 @@
 
 module k68_arb (/*AUTOARG*/
    // Outputs
-   m_dat_o, m_we_o, m_cs_o, g_we_o, g_cs_o, a_we_o, a_cs_o, b_we_o, b_cs_o, 
+   m_dat_o, r_we_o, r_cs_o, g_we_o, g_cs_o, a_we_o, a_cs_o, b_we_o, b_cs_o, 
    // Inputs
-   rst_i, m_add_i, m_we_i, m_dat_i, g_dat_i, a_dat_i, b_dat_i, arbclk
+   rst_i, m_cs_i, m_add_i, m_we_i, r_dat_i, g_dat_i, a_dat_i, b_dat_i, arbclk
    ) ;
    parameter aw = `k68_ADDR_W;
    parameter dw = `k68_DATA_W;
@@ -65,15 +65,16 @@ module k68_arb (/*AUTOARG*/
         
    // Data Memory
    output [dw-1:0] m_dat_o;
+   input 	   m_cs_i;
    input [aw-1:0]  m_add_i;
    input 	   m_we_i;
    reg [dw-1:0]    m_dat_o;
    
    // SPRAM
-   input [dw-1:0]  m_dat_i;
-   output 	   m_we_o;
-   output 	   m_cs_o;
-   reg 		   m_we_o, m_cs_o;
+   input [dw-1:0]  r_dat_i;
+   output 	   r_we_o;
+   output 	   r_cs_o;
+   reg 		   r_we_o, r_cs_o;
    
    // 
    // Peripherals
@@ -97,7 +98,7 @@ module k68_arb (/*AUTOARG*/
    input 	   arbclk;
 
    always @ (posedge arbclk) begin
-    if (rst_i) begin
+    if (rst_i || !m_cs_i) begin
       /*AUTORESET*/
       // Beginning of autoreset for uninitialized flops
       a_cs_o = 0;
@@ -106,11 +107,11 @@ module k68_arb (/*AUTOARG*/
       b_we_o = 0;
       g_cs_o = 0;
       g_we_o = 0;
-      m_cs_o = 0;
+      r_cs_o = 0;
       m_dat_o = 0;
-      m_we_o = 0;
+      r_we_o = 0;
       // End of automatics
-    end else begin // if (rst_i)
+    end else begin // if (rst_i || !m_cs_i)
        /*AUTORESET*/
        // Beginning of autoreset for uninitialized flops
        a_cs_o = 0;
@@ -119,9 +120,9 @@ module k68_arb (/*AUTOARG*/
        b_we_o = 0;
        g_cs_o = 0;
        g_we_o = 0;
-       m_cs_o = 0;
+       r_cs_o = 0;
        m_dat_o = 0;
-       m_we_o = 0;
+       r_we_o = 0;
        // End of automatics
        
       case (m_add_i[aw-1])
@@ -157,33 +158,33 @@ module k68_arb (/*AUTOARG*/
 		   b_we_o = 0;
 		   g_cs_o = 0;
 		   g_we_o = 0;
-		   m_cs_o = 0;
+		   r_cs_o = 0;
 		   m_dat_o = 0;
-		   m_we_o = 0;
+		   r_we_o = 0;
 		   // End of automatics
 		end
 	      endcase // case(m_add_i)
 	    default: begin
-	       m_we_o = m_we_i;
-	       m_cs_o = 1'b1;
-	       m_dat_o = m_dat_i;
+	       r_we_o = m_we_i;
+	       r_cs_o = 1'b1;
+	       m_dat_o = r_dat_i;
 	    end
 	  endcase // case(m_add_i[31:24])
 	default:
 	  case (m_add_i[1])
 	    1'b1: begin
-	       m_dat_o = {m_dat_i[31:16], m_dat_i[31:16]};
-	       m_we_o = 1'b0;
-	       m_cs_o = 1'b0;
+	       m_dat_o = {r_dat_i[31:16], r_dat_i[31:16]};
+	       r_we_o = 1'b0;
+	       r_cs_o = 1'b0;
 	       a_cs_o = 1'b0;
 	       b_cs_o = 1'b0;
 	       g_cs_o = 1'b0;
 	       
 	    end
 	    default: begin
-	       m_dat_o = {m_dat_i[15:0], m_dat_i[15:0]};
-	       m_we_o = 1'b0;
-	       m_cs_o = 1'b0;
+	       m_dat_o = {r_dat_i[15:0], r_dat_i[15:0]};
+	       r_we_o = 1'b0;
+	       r_cs_o = 1'b0;
 	       a_cs_o = 1'b0;
 	       b_cs_o = 1'b0;
 	       g_cs_o = 1'b0;
