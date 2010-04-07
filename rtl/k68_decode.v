@@ -605,7 +605,6 @@ assign get_ab_o  = valid_trx;
 	   alu = ALU_MOV;
 	   
 	   add_a_o = op_i[5:0];
-	   add_b_o = {op_i[8:6], op_i[11:9]};
 
 	   add_src = op_i[5:0];
 	   add_dst = {op_i[8:6], op_i[11:9]};
