@@ -48,6 +48,7 @@ module k68_cpu (/*AUTOARG*/
    parameter sw = `k68_SCR_W;
    parameter lw = `k68_ALU_W;
    parameter kw = 6;
+   parameter esc = `ESC;
             
    output [aw-1:0] add_o;
    output 	   cs_o;
@@ -72,10 +73,11 @@ module k68_cpu (/*AUTOARG*/
    wire [lw-1:0]   d_alu_o;
    wire [dw-1:0]   d_src_o, d_dst_o;
    wire 	   d_run_o,d_brch_o;
-   wire 	   f2d_vld, f2d_rdy, d_get_ab_o;
+   wire 	   f2d_vld, f2d_rdy, d_get_ab_i;
    wire [1:0] 	   d_skip_o;
    wire [aw-1:0]   d_pc_o;
    wire [kw-1:0]   d_add_a_o, d_add_b_o, d_add_c_o, d_add_src_o, d_add_dst_o;
+   wire [kw-1:0]   d_add_a_i, d_add_b_i;
    wire [dw-1:0]   d_dat_c_o;
    wire [1:0] 	   d_siz_o, d_siz_a_o;
    wire [dw-1:0]   d_imm_o;
@@ -171,7 +173,6 @@ module k68_cpu (/*AUTOARG*/
 		     .r_we_o(a_we_o),
 		     .rd_dat_o(a_rd_dat_o),
 		     
-		     .get_ab_i(d_get_ab_o),
 		     .dat_c_i(d_dat_c_o),
 		     .add_a_i(d_add_a_o),
 		     .add_b_i(d_add_b_o),
@@ -221,6 +222,9 @@ module k68_cpu (/*AUTOARG*/
 			.rd_dat_i(a_rd_dat_o),
 			.clk_i(clk_i), .rst_i(rst_o)
 			);
+
+   assign d_add_a_o = d_get_ab_i ? d_add_a_i : esc;
+   assign d_add_b_o = d_get_ab_i ? d_add_b_i : esc;
    
    k68_decode decode0 (
 		       .pc_i(f_pc_o),
@@ -249,9 +253,9 @@ module k68_cpu (/*AUTOARG*/
 		       .pc_o(d_pc_o),
 		       .alu_pc_o(d_alu_pc_o),
 		       
-		       .get_ab_o(d_get_ab_o),
-		       .add_a_o(d_add_a_o),
-		       .add_b_o(d_add_b_o),
+		       .get_ab_o(d_get_ab_i),
+		       .add_a_o(d_add_a_i),
+		       .add_b_o(d_add_b_i),
 		       .add_c_o(d_add_c_o),
 		       .add_src_o(d_add_src_o),
 		       .add_dst_o(d_add_dst_o),

@@ -40,7 +40,7 @@ module k68_load (/*AUTOARG*/
    dat_a_o, dat_b_o, dat_c_o, skip_o, m_add_o, m_dat_o, m_cs_o, 
    m_we_o, rs_add_o, rt_add_o, rd_add_o, rd_dat_o, r_we_o, 
    // Inputs
-   rst_i, m_clk_i, get_ab_i, dat_c_i, add_a_i, add_b_i, add_c_i, imm_i, siz_i, 
+   rst_i, m_clk_i, dat_c_i, add_a_i, add_b_i, add_c_i, imm_i, siz_i, 
    clk_i, pc_i, c_siz_i, m_dat_i, rs_dat_i, rt_dat_i
    ) ;
    parameter dw = `k68_DATA_W;
@@ -55,7 +55,6 @@ module k68_load (/*AUTOARG*/
    input     rst_i, m_clk_i;
       
    // Decoder I/O
-   input           get_ab_i;
    output [dw-1:0] dat_a_o, dat_b_o, dat_c_o;
    input [dw-1:0]  dat_c_i;
    output [1:0]    skip_o;
@@ -112,12 +111,12 @@ module k68_load (/*AUTOARG*/
       end else begin
 	 case (m_cnt)
 	   2'b01: begin
-	      add = get_ab_i ? add_a_i : esc;
+	      add = add_a_i;
 	      we = 1'b0;
 	      siz = siz_i;
 	   end
 	   2'b10: begin
-	      add = get_ab_i ? add_b_i : esc;
+	      add = add_b_i;
 	      we = 1'b0;
 	      siz = siz_i;
 	   end
