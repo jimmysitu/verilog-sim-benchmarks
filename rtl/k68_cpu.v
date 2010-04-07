@@ -115,9 +115,6 @@ module k68_cpu (/*AUTOARG*/
    assign 	   we_o = ~we;
 `endif
 
-   //
-   // Fix Endianess
-   //
    
    k68_clkgen clkgen0(.clk4_o(clk4_i), .rst_o(rst_o), .clk_o(clk_o),
 		      .clk_i(clk_i), .rst_i(rst)
@@ -134,6 +131,7 @@ module k68_cpu (/*AUTOARG*/
 		   .p_add_i(p_add_o),
 		   .p_dat_o(p_dat_i),
 
+		   .m_cs_i(m_cs_o),
 		   .m_add_i(m_add_o),
 		   .m_we_i(m_we_o),
 		   .m_dat_i(m_dat_o),

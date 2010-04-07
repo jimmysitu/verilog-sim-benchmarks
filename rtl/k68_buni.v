@@ -42,7 +42,7 @@ module k68_buni (/*AUTOARG*/
    // Outputs
    cs_o, we_o, add_o, dat_o, p_dat_o, m_dat_o, 
    // Inputs
-   clk_i, rst_i, p_add_i, m_add_i, dat_i, m_dat_i, m_we_i
+   clk_i, rst_i, p_add_i, m_cs_i, m_add_i, dat_i, m_dat_i, m_we_i
    ) ;
    parameter aw = `k68_ADDR_W;
    parameter dw = `k68_DATA_W;
@@ -59,6 +59,7 @@ module k68_buni (/*AUTOARG*/
    input [dw-1:0]  dat_i;
    output [dw-1:0] dat_o;
        
+   input           m_cs_i;
    input [dw-1:0]  m_dat_i;
    output [ow-1:0]  p_dat_o;
    output [dw-1:0]  m_dat_o;
@@ -67,8 +68,7 @@ module k68_buni (/*AUTOARG*/
    reg [1:0] 	    uni_cnt;
  
 
-   // Chip select always ON becuase it's either Program or Data Access
-   assign 	    cs_o = 1'b1;
+   assign 	    cs_o = (uni_cnt == 2'b00) ? 1'b1 : m_cs_i;
    
    assign 	    m_dat_o = (uni_cnt == 2'b00) ? xxxx : dat_i;
    assign 	    p_dat_o = (uni_cnt == 2'b00) ? dat_i : xxxx;

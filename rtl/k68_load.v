@@ -161,14 +161,12 @@ module k68_load (/*AUTOARG*/
       end else begin // if (rst_i)
 
 	 
-	 // Beginning of autoreset for uninitialized flops
 	 dat_a_o <= dat_a_o;
 	 dat_b_o <= dat_b_o;
 	 m_add_o <= m_add_o;
-	 m_cs_o <= m_cs_o;
-	 m_we_o <= m_we_o;
+	 m_cs_o <= 0;
+	 m_we_o <= 0;
 	 dat_c_o <= dat_c_o;
-	 // End of automatics
 	     
 	 case(m_cnt)
 	   2'b01: begin
@@ -179,6 +177,7 @@ module k68_load (/*AUTOARG*/
 	      	3'h7:
 		  case (add_a_i[2:0])
 		    3'h4,3'h5: dat_a_o <= dat;
+		    3'h7:      m_cs_o  <= 0;
 		    default: begin
 		       dat_a_o <= dat_a_o;
 		       m_add_o <= ea;
@@ -207,6 +206,7 @@ module k68_load (/*AUTOARG*/
 	      	3'h7:
 		  case (add_b_i[2:0])
 		    3'h4,3'h5: dat_b_o <= dat;
+		    3'h7:      m_cs_o  <= 0;
 		    default: begin
 		       dat_b_o <= dat_b_o;
 		       m_add_o <= ea;
@@ -268,11 +268,13 @@ module k68_load (/*AUTOARG*/
 	      	      
 	      case (add_c_i[5:3])
 		3'h0,3'h1:begin
+		   m_cs_o <= 1'b0;
 		   m_we_o <= 1'b0;
 		end
 		3'h7: begin
 		   case (add_c_i[2:0])
 		     3'h4,3'h7,3'h5: begin
+			m_cs_o <= 1'b0;
 			m_we_o <= 1'b0;
 		     end
 		     default: m_we_o <= 1'b1;
