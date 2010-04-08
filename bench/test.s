@@ -5,7 +5,11 @@
 _start: /*Start of Program*/
 	bra	init
 init:	/* Allocate Stack, Init Uarts, Say Hello */
-	movel	#0x0000400, %a7
+	movel	#0x80000100,  %a7
+	movel	#0x00000200,  %a7@
+	movel	#0x00000300, -%a7@
+	movel	#0x00000400,  %a7@+
+	movel	#0x00000500,  %a7@
 	bsr	init_uart
 	bsr	sign_on
 	bra	main
@@ -13,34 +17,34 @@ init:	/* Allocate Stack, Init Uarts, Say Hello */
 init_uart: /* Initialize Uarts */
 	
 	/* UART A BRG */
-	movel	#0xFF010008, %a0
+	movel	#0xFF010002, %a0
 	moveb	#0x01, %a0@
-	movel	#0xFF01000C, %a0
+	movel	#0xFF010003, %a0
 	moveb	#0x01, %a0@
 	
 	/* UART B BRG */
-	movel	#0xFF020008, %a0
+	movel	#0xFF020002, %a0
 	moveb	#0x01, %a0@
-	movel	#0xFF02000C, %a0
+	movel	#0xFF020003, %a0
 	moveb	#0x01, %a0@
 
 	rts
 	
 stat_a:	/* Check UART A readable status */
-	movel	#0xFF010004, %a0
+	movel	#0xFF010001, %a0
 	moveb	%a0@, %d0
 	andib	#1, %d0
 	rts
 	
 read_a: /* Read a byte from UART A */
 	bsr	stat_a
-	beq	read_a
+	bne	read_a
 	movel	#0xFF010000, %a0
 	moveb	%a0@, %d1
 	rts
 	
 write_a:/* Write a byte to UART A */
-	movel	#0xFF010004, %a0
+	movel	#0xFF010001, %a0
 write_a_loop:		
 	moveb	%a0@, %d0
 	andib	#2, %d0
@@ -50,24 +54,24 @@ write_a_loop:
 	rts
 		
 stat_b:	/* Check UART B readable status */
-	movel	#0xFF020004, %a0
+	movel	#0xFF020001, %a0
 	moveb	%a0@, %d0
 	andib	#1, %d0
 	rts
 	
 read_b: /* Read a byte from UART B */
 	bsr	stat_b
-	beq	read_b
+	bne	read_b
 	movel	#0xFF020000, %a0
 	moveb	%a0@, %d1
 	rts
 		
 write_b:/* Write a byte to UART B */
-	movel	#0xFF020004, %a0
+	movel	#0xFF020001, %a0
 write_b_loop:		
 	moveb	%a0@, %d0
 	andib	#2, %d0
-	beq	write_b_loop
+	bne	write_b_loop
 	movel	#0xFF020000, %a0
 	moveb	%d1, %a0@
 	rts
@@ -91,9 +95,12 @@ main:	/* Main Program Loop */
 
 	/* Check for Data on A */
 	bsr	stat_a
-	beq	do_a
+	bne	check_b
+	bsr	do_a
+check_b:/* Check for Data on B */
 	bsr	stat_b
-	beq	do_b
+	bne	main
+	bsr	do_b
 	bra	main
 
 do_a:	/* Encrypt A and Write to B */
