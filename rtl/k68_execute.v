@@ -65,6 +65,7 @@ module k68_execute (/*AUTOARG*/
    parameter ALU_SBCD = `k68_ALU_SBCD;
    parameter ALU_NBCD = `k68_ALU_NBCD;
    parameter ALU_ADD = `k68_ALU_ADD;
+   parameter ALU_ADD_NOCC = `k68_ALU_ADD_NOCC;
    parameter ALU_ADDX = `k68_ALU_ADDX;
    parameter ALU_SUB = `k68_ALU_SUB;
    parameter ALU_SUBX = `k68_ALU_SUBX;
@@ -76,6 +77,7 @@ module k68_execute (/*AUTOARG*/
    parameter ALU_BCLR = `k68_ALU_BCLR;
    parameter ALU_BSET = `k68_ALU_BSET;
    parameter ALU_MOV = `k68_ALU_MOV;
+   parameter ALU_MOV_NOCC = `k68_ALU_MOV_NOCC;
    parameter ALU_DIV = `k68_ALU_DIV;
    parameter ALU_MUL = `k68_ALU_MUL;
    parameter ALU_ASX = `k68_ALU_ASX;
@@ -416,7 +418,7 @@ module k68_execute (/*AUTOARG*/
 	 //
 	 case (alu_i)
 	   // ARITHMETIC
-	   ALU_ADD: begin
+	   ALU_ADD, ALU_ADD_NOCC: begin
 	      add_c = add_dst_i;
 	   end
 	   ALU_SUB: begin
@@ -507,7 +509,7 @@ module k68_execute (/*AUTOARG*/
 	      add_c = add_dst_i;
 	   end
 	   // MOVS	   
-	   ALU_MOV: begin
+	   ALU_MOV, ALU_MOV_NOCC: begin
 	      add_c = add_dst_i;
 	   end
 	   // BIT TESTS
@@ -597,7 +599,7 @@ module k68_execute (/*AUTOARG*/
 	 //
 	 case (alu_i)
 	   // ARITHMETIC
-	   ALU_ADD: begin
+	   ALU_ADD, ALU_ADD_NOCC: begin
 	      res = src + dst;//res_a;
 	   end
 	   ALU_SUB: begin
@@ -688,7 +690,7 @@ module k68_execute (/*AUTOARG*/
 		res = {ssr_o, ccr_o, 16'd0};
 	   end
 	   // MOVS	   
-	   ALU_MOV: begin
+	   ALU_MOV, ALU_MOV_NOCC: begin
 	      res = src;
 	   end
 	   // BIT TESTS

@@ -70,6 +70,7 @@ module k68_decode (/*AUTOARG*/
    parameter ALU_SBCD = `k68_ALU_SBCD;
    parameter ALU_NBCD = `k68_ALU_NBCD;
    parameter ALU_ADD = `k68_ALU_ADD;
+   parameter ALU_ADD_NOCC = `k68_ALU_ADD_NOCC;
    parameter ALU_ADDX = `k68_ALU_ADDX;
    parameter ALU_SUB = `k68_ALU_SUB;
    parameter ALU_SUBX = `k68_ALU_SUBX;
@@ -81,6 +82,7 @@ module k68_decode (/*AUTOARG*/
    parameter ALU_BCLR = `k68_ALU_BCLR;
    parameter ALU_BSET = `k68_ALU_BSET;
    parameter ALU_MOV = `k68_ALU_MOV;
+   parameter ALU_MOV_NOCC = `k68_ALU_MOV_NOCC;
    parameter ALU_DIV = `k68_ALU_DIV;
    parameter ALU_MUL = `k68_ALU_MUL;
    parameter ALU_ASX = `k68_ALU_ASX;
@@ -915,7 +917,7 @@ assign get_ab_o  = valid_trx;
 			  add_b_o = esc;
 			  siz_a_o = 2'b10;
 			  
-			  alu = ALU_MOV;
+			  alu = ALU_MOV_NOCC;
 			  //dst = zero;
 			  src = reset;
 			  add_dst = 6'h3C;
@@ -950,7 +952,7 @@ assign get_ab_o  = valid_trx;
 			  add_b_o = esc;
 			  siz_a_o = 2'b10;
 			  
-			  alu = ALU_MOV;
+			  alu = ALU_MOV_NOCC;
 			  //dst = zero;
 			  src = {dat_a_i[31:1],1'b0};
 			  add_dst = 6'h3C;
@@ -962,7 +964,7 @@ assign get_ab_o  = valid_trx;
 			  add_b_o = esc;
 			  siz_a_o = 2'b10;
 			  
-			  alu = ALU_MOV;
+			  alu = ALU_MOV_NOCC;
 			  //dst = zero;
 			  src = {dat_a_i[31:1],1'b0};
 			  add_dst = 6'h3C;
@@ -987,7 +989,7 @@ assign get_ab_o  = valid_trx;
 			  add_b_o = esc;
 			  siz_a_o = 2'b10;
 			  
-			  alu = ALU_MOV;
+			  alu = ALU_MOV_NOCC;
 			  //dst = zero;
 			  src = {dat_a_i[31:1],1'b0};
 			  add_dst = 6'h3C;
@@ -1029,7 +1031,7 @@ assign get_ab_o  = valid_trx;
 		add_b_o = 6'h3D;
 		siz_a_o = 2'b10;
 		
-		alu = ALU_MOV;
+		alu = ALU_MOV_NOCC;
 		//dst = zero;
 		src = {dat_a_i[31:1],1'b1};
 		add_dst = 6'h3C;
@@ -1044,7 +1046,7 @@ assign get_ab_o  = valid_trx;
 		src = {dat_a_i[31:1],1'b0};
 
 		siz = 2'b10;
-		alu = ALU_MOV;
+		alu = ALU_MOV_NOCC;
 		//dst = {pc_i[31:1],1'b0};
 		add_dst = 6'h3C;
 		add_src = esc;
@@ -1184,7 +1186,7 @@ assign get_ab_o  = valid_trx;
 		   siz = 2'b00;
 		end // else: !if(op_i[7:0] == 8'd0)
 				
-		alu = ALU_ADD;
+		alu = ALU_ADD_NOCC;
 		//dst = {pc_i[31:1],1'b0};
 		add_dst = 6'h3C;
 		add_src = esc;
@@ -1204,7 +1206,7 @@ assign get_ab_o  = valid_trx;
 		   siz = 2'b00;
 		end // else: !if(op_i[7:0] == 8'd0)
 				
-		alu = ALU_ADD;
+		alu = ALU_ADD_NOCC;
 		//dst = {pc_i[31:1],1'b1};
 		add_dst = 6'h3C;
 		add_src = esc;
@@ -1820,7 +1822,7 @@ assign get_ab_o  = valid_trx;
 		 
 	      end
 	      
-	      ALU_ADD,ALU_MOV,ALU_BCC,ALU_VECTOR: begin // BRA,JMP,BSR,JSR
+	      ALU_ADD_NOCC,ALU_MOV_NOCC,ALU_BCC,ALU_VECTOR: begin // BRA,JMP,BSR,JSR
 		 brch_o = 1'b1;
 		 pc_o = {res_i[aw-1:1],1'b0};
 		 case (res_i[0]) // SubRoutine
@@ -1833,7 +1835,7 @@ assign get_ab_o  = valid_trx;
 		      dat_c_o = xxxx;
 		   end
 		 endcase // case(res_i[0])
-	      end // case: ALU_ADD,ALU_MOV,ALU_BCC,ALU_VECTOR
+	      end // case: ALU_ADD_NOCC,ALU_MOV_NOCC,ALU_BCC,ALU_VECTOR
 	      
 	      default: begin
 		 brch_o = 1'b0;

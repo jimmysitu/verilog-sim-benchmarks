@@ -194,6 +194,8 @@
 `define k68_ALU_TAS     6'h23
 `define k68_ALU_TST     6'h24
 `define k68_ALU_EA     6'h25
+`define k68_ALU_ADD_NOCC	6'h26
+`define k68_ALU_MOV_NOCC	6'h27
 
 //
 // OPERAND CONSTS
