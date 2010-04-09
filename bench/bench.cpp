@@ -73,6 +73,8 @@ int main(int argc, char **argv, char **env) {
 	if (main_time%5 == 0) top->clk = !top->clk;
     }
 
+    cout<<"Final sum = "<<hex<<top->sum<<"\n";
+
     double cpuEnd = cpuTime();
     cout<<"Test Complete, "<<fixed<<setprecision(2)
 	<<(cpuEnd-cpuStart)<<" cpu sec, "

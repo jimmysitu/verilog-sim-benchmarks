@@ -38,12 +38,12 @@
 module bench;
 
    reg 	       clk,arbclk_i,rst;
-   wire [31:0] dat_i;
+   wire [31:0] sum;
    
    k68_soc_test k68_soc_test
      (/*AUTOINST*/
       // Outputs
-      .dat_i				(dat_i[31:0]),
+      .sum				(sum[31:0]),
       // Inputs
       .clk				(clk),
       .rst				(rst),
@@ -52,11 +52,6 @@ module bench;
 
    integer     cycles;
    integer     ign;
-
-   reg [31:0]  sum;
-
-   initial sum = 0;
-   always @ (posedge clk) sum <= sum^dat_i;
 
    initial begin
       cycles = 0;

@@ -37,22 +37,32 @@
 
 module k68_soc_test (/*AUTOARG*/
    // Outputs
-   dat_i, 
+   sum,
    // Inputs
    clk, rst, arbclk_i
    ) ;
    
    wire [31:0] add_o;
    wire [31:0] p_dat_i,m_dat_i,dat_o;
-   output [31:0]  dat_i;  // So verilator won't rip up
    reg [31:0]  dat_i;
    
    wire [1:0]  rts,tx;
    wire        we;
       
    input       clk,rst,arbclk_i;
-   
    wire        unused_clk_o, unused_rst_o;
+
+   output [31:0] sum;   // So verilator won't rip up
+   reg    [31:0] sum;
+
+   always @ (posedge clk or negedge rst) begin
+      if (!rst) begin
+	 sum <= 0;
+      end else if (we) begin
+	 sum <= {sum[24:0],sum[31:25]} ^ dat_o;
+      end
+   end
+   
 
    k68_soc dut0 (
 		 .add_o(add_o),
