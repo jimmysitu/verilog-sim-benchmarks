@@ -109,12 +109,12 @@ module k68_calc (/*AUTOARG*/
 		3'h3: begin // %a#@+
 		   rt_add_o = {1'b1, add_i[2:0]};
 		   rd_add_o = {1'b1, add_i[2:0]};
-		   r_we_o = ~we_i;
+		   r_we_o = 1'b1;
 		end // case: 3'h3
 		3'h4: begin // -%a#@
 		   rt_add_o = {1'b1, add_i[2:0]};
 		   rd_add_o = {1'b1, add_i[2:0]};
-		   r_we_o = we_i;
+		   r_we_o = 1'b1;
 		end // case: 3'h4
 		3'h5: begin // %a#(+d16)
 		   rt_add_o = {1'b1, add_i[2:0]};
@@ -240,15 +240,15 @@ module k68_calc (/*AUTOARG*/
 			 
 		       endcase // case(siz_i)
 		    end // case: 3'h4
-		    3'h5: begin
+		    3'h5: begin // %pc
 		       dat_o = pc_i;
 		       ea_o = xxxx;
 		    end
-		    3'h7: begin
+		    3'h7: begin // 32'd0
 		       dat_o = 32'd0;
 		       ea_o = xxxx;
 		    end
-		    default: begin
+		    default: begin // x
 		       ea_o = xxxx;
 		       dat_o = xxxx;
 		    end
