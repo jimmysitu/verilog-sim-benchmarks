@@ -1,0 +1,47 @@
+/////////////////////////////////////////////////////////////////////
+Microarchitectural overview:
+
+* 4-stage pipeline: Fetch->Decode->Execute->Writeback
+* Operand reads (registers & memory) in the Decode stage.
+* Writes (registers & memory) in the Writeback stage.
+* CCR & SSR are both read and written in the Execute stage.
+* Accesses to memory and registers are quad-pumped:
+    {fetch_instr, write_result, read_operand_a, read_operand_b}
+* Branches are always predicted "not taken".
+
+/////////////////////////////////////////////////////////////////////
+Known bugs:
+
+1) There isn't any interlock (or forwarding) for writes in the 
+Writeback stage to reads in the Decode stage.  This applies to 
+both registers and memory accesses.
+
+2) Branch misprediction recovery doesn't properly handle 
+restoration of the correct CCR and SSR states.
+
+
+/////////////////////////////////////////////////////////////////////
+
+Neither of the above known bugs affect the functionality of the
+"verilog-sim-benchmarks".  There are likely other bugs, but they
+don't appear to affect the functionality of this test either.
+Standard disclaimers apply.
+
+/////////////////////////////////////////////////////////////////////
+////                                                             ////
+////     THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY     ////
+//// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED   ////
+//// TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS   ////
+//// FOR A PARTICULAR PURPOSE. IN NO EVENT SHALL THE AUTHOR      ////
+//// OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,         ////
+//// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES    ////
+//// (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE   ////
+//// GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR        ////
+//// BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF  ////
+//// LIABILITY, WHETHER IN  CONTRACT, STRICT LIABILITY, OR TORT  ////
+//// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT  ////
+//// OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         ////
+//// POSSIBILITY OF SUCH DAMAGE.                                 ////
+////                                                             ////
+/////////////////////////////////////////////////////////////////////
+
