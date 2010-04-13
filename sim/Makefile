@@ -80,23 +80,23 @@ VERILATOR_FLAGS  = $(COMMON_FLAGS) \
 	--cc ../bench/k68_soc_test.v --exe $(PWD)/../bench/bench.cpp  -prefix m68 -Wno-WIDTH \
 	-O3 -x-assign 0
 
-ALL_SIMS += vl-32
-vl-32: 
+ALL_SIMS += vlt-32
+vlt-32: 
 	$(VERILATOR) $(VERILATOR_FLAGS)
 	( cd obj_dir ; rm *.o ; make -j -f m68.mk LDFLAGS=-m32 OPT_FAST="-m32 -O3" OPT_SLOW="-m32 -O3" )
 	$(BENCHMARKER) "$@ $(VERILATOR_VERSION)" "obj_dir/m68 %c"
 
-ALL_SIMS += vl-64
-vl-64:
+ALL_SIMS += vlt-64
+vlt-64:
 	$(VERILATOR) $(VERILATOR_FLAGS)
 	( cd obj_dir ; rm *.o ; make -j -f m68.mk LDFLAGS=-m64 OPT_FAST="-m64 -O3" OPT_SLOW="-m64 -O3" )
 	$(BENCHMARKER) "$@ $(VERILATOR_VERSION)" "obj_dir/m68 %c"
 
-m68.gprof:  vl
+m68.gprof:  vlt
 	gprof obj_dir/m68 > $@
 
-vl-waves:
-	$(VERILATOR_ROOT)/bin/verilator --trace $(VL_FLAGS)
+vlt-waves:
+	$(VERILATOR_ROOT)/bin/verilator --trace $(VLT_FLAGS)
 	( cd obj_dir ; make -f m68.mk )
 	time obj_dir/m68 -l sim.log
 
@@ -180,7 +180,7 @@ vcomp:
 
 ALL_SIMS += vbs
 vbs: 
-	@echo "Need .vpp files made by vl"
+	@echo "Need .vpp files made by vlt"
 	time vbs obj_dir/*.vpp
 
 ######################################################################
