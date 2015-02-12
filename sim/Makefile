@@ -10,6 +10,7 @@
 
 default: help
 
+RM := /bin/rm
 PWD := $(shell pwd)
 BENCHMARKER := perl benchmarker
 
@@ -74,22 +75,22 @@ machine:
 
 ######################################################################
 
-VERILATOR = $(VERILATOR_ROOT)/bin/verilator
-VERILATOR_VERSION = $(shell $(VERILATOR) --version)
+VERILATOR_EXE = $(VERILATOR_ROOT)/bin/verilator
+VERILATOR_VERSION = $(shell $(VERILATOR_EXE) --version)
 VERILATOR_FLAGS  = $(COMMON_FLAGS) \
 	--cc ../bench/k68_soc_test.v --exe $(PWD)/../bench/bench.cpp  -prefix m68 -Wno-WIDTH \
 	-O3 -x-assign 0
 
 ALL_SIMS += vlt-32
 vlt-32: 
-	$(VERILATOR) $(VERILATOR_FLAGS)
-	( cd obj_dir ; rm *.o ; make -j -f m68.mk LDFLAGS=-m32 OPT_FAST="-m32 -O3" OPT_SLOW="-m32 -O3" )
+	$(VERILATOR_EXE) $(VERILATOR_FLAGS)
+	( cd obj_dir ; $(RM) *.o ; make -j -f m68.mk LDFLAGS=-m32 OPT_FAST="-m32 -O3" OPT_SLOW="-m32 -O3" )
 	$(BENCHMARKER) "$@ $(VERILATOR_VERSION)" "obj_dir/m68 %c"
 
 ALL_SIMS += vlt-64
 vlt-64:
-	$(VERILATOR) $(VERILATOR_FLAGS)
-	( cd obj_dir ; rm *.o ; make -j -f m68.mk LDFLAGS=-m64 OPT_FAST="-m64 -O3" OPT_SLOW="-m64 -O3" )
+	$(VERILATOR_EXE) $(VERILATOR_FLAGS)
+	( cd obj_dir ; $(RM) *.o ; make -j -f m68.mk LDFLAGS=-m64 OPT_FAST="-m64 -O3" OPT_SLOW="-m64 -O3" )
 	$(BENCHMARKER) "$@ $(VERILATOR_VERSION)" "obj_dir/m68 %c"
 
 m68.gprof:  vlt
@@ -102,71 +103,77 @@ vlt-waves:
 
 ######################################################################
 
-VCS = vcs
-VCS_VERSION = $(shell vcs -ID 2>&1 | grep 'version =')
+VCS_EXE ?= $(value VERILATOR_VCS)
+VCS_EXE ?= $(value VCS)
+VCS_EXE ?= vcs
+VCS_VERSION = $(shell $(VCS_EXE) -ID 2>&1 | grep 'version =')
 VCS_FLAGS = $(COMMON_FLAGS) \
 	+define+vcs+1 ../bench/bench.v
 
 ALL_SIMS += vcs-32-2state
 vcs-32-2state:
-	-rm -rf csrc simv.daidir
-	$(VCS) $(VCS_FLAGS)
+	-$(RM) -rf csrc simv.daidir
+	$(VCS_EXE) $(VCS_FLAGS)
 	$(BENCHMARKER) "$@ $(VCS_VERSION)" "./simv +CYCLES=%c +2state"
 
 ALL_SIMS += vcs-64-2state
 vcs-64-2state:
-	-rm -rf csrc simv.daidir
-	$(VCS) $(VCS_FLAGS) -full64
+	-$(RM) -rf csrc simv.daidir
+	$(VCS_EXE) $(VCS_FLAGS) -full64
 	$(BENCHMARKER) "$@ $(VCS_VERSION)" "./simv +CYCLES=%c +2state"
 
 ALL_SIMS += vcs-32-4state
 vcs-32-4state:
-	-rm -rf csrc simv.daidir
-	$(VCS) $(VCS_FLAGS)
+	-$(RM) -rf csrc simv.daidir
+	$(VCS_EXE) $(VCS_FLAGS)
 	$(BENCHMARKER) "$@ $(VCS_VERSION)" "./simv +CYCLES=%c"
 
 ALL_SIMS += vcs-64-4state
 vcs-64-4state:
-	-rm -rf csrc simv.daidir
-	$(VCS) $(VCS_FLAGS) -full64
+	-$(RM) -rf csrc simv.daidir
+	$(VCS_EXE) $(VCS_FLAGS) -full64
 	$(BENCHMARKER) "$@ $(VCS_VERSION)" "./simv +CYCLES=%c"
 
 vcs-waves:
-	$(VCS) +cli -I $(VCS_FLAGS)
+	$(VCS_EXE) +cli -I $(VCS_FLAGS)
 	time ./simv -l sim.log
 
 ######################################################################
 
-NCVERILOG = ncverilog
-NC_VERSION = $(shell $(NCVERILOG) -version)
+NC_EXE ?= $(value VERILATOR_NCVERILOG)
+NC_EXE ?= $(value NCVERILOG)
+NC_EXE ?= ncverilog
+NC_VERSION = $(shell $(NC_EXE) -version)
 NC_FLAGS  = $(COMMON_FLAGS) \
 	+ncsimargs+-status +nowarn+LIBNOU -q ../bench/bench.v
 NC_RUN_FLAGS = -R
 
 ALL_SIMS += nc-32
 nc-32:
-	$(NCVERILOG) $(NC_FLAGS) -c
-	$(BENCHMARKER) "$@ $(NC_VERSION)" "$(NCVERILOG) $(NC_RUN_FLAGS) +CYCLES=%c"
+	$(NC_EXE) $(NC_FLAGS) -c
+	$(BENCHMARKER) "$@ $(NC_VERSION)" "$(NC_EXE) $(NC_RUN_FLAGS) +CYCLES=%c"
 
 ALL_SIMS += nc-64
 nc-64:
-	$(NCVERILOG) $(NC_FLAGS) +nc64bit -c
-	$(BENCHMARKER) "$@ $(NC_VERSION)" "$(NCVERILOG) $(NC_RUN_FLAGS) +CYCLES=%c +nc64bit"
+	$(NC_EXE) $(NC_FLAGS) +nc64bit -c
+	$(BENCHMARKER) "$@ $(NC_VERSION)" "$(NC_EXE) $(NC_RUN_FLAGS) +CYCLES=%c +nc64bit"
 
 nc-waves:
 	time ncverilog +access+rc $(NC_FLAGS)
 
 ######################################################################
 
-IVERILOG = iverilog
-ICARUS_VERSION = $(shell $(IVERILOG) -V 2>&1 | head -1)
+ICARUS_EXE ?= $(value VERILATOR_IVERILOG)
+ICARUS_EXE ?= $(value IVERILOG)
+ICARUS_EXE ?= iverilog
+ICARUS_VERSION = $(shell $(ICARUS_EXE) -V 2>&1 | head -1)
 ICARUS_FLAGS = $(COMMON_FLAGS) \
 	-o simi \
 	../bench/bench.v
 
 ALL_SIMS += icarus
 icarus:
-	time $(IVERILOG) $(ICARUS_FLAGS)
+	time $(ICARUS_EXE) $(ICARUS_FLAGS)
 	$(BENCHMARKER) "icarus $(ICARUS_VERSION)" "./simi +CYCLES=%c"
 
 ######################################################################
@@ -185,21 +192,27 @@ vbs:
 
 ######################################################################
 
-CVER = cver
-CVER_VERSION = $(shell $(CVER) -V 2>&1 | head -1)
+CVER_EXE ?= $(value VERILATOR_CVER)
+CVER_EXE ?= $(value CVER)
+CVER_EXE ?= cver
+CVER_VERSION = $(shell $(CVER_EXE) -V 2>&1 | head -1)
 CVER_FLAGS = $(COMMON_FLAGS) \
 	+verbose \
 	../bench/bench.v
 
 ALL_SIMS += cver
 cver: 
-	$(BENCHMARKER) "$(CVER) $(CVER_VERSION)" "$(CVER) $(CVER_FLAGS) +CYCLES=%c"
+	$(BENCHMARKER) "$(CVER_EXE) $(CVER_VERSION)" "$(CVER_EXE) $(CVER_FLAGS) +CYCLES=%c"
 
 ######################################################################
 
-CVC = cvc
-CVC64 = cvc64
-CVC_VERSION = $(shell $(CVC) -V 2>&1 | head -1)
+CVC_EXE ?= $(value VERILATOR_CVC)
+CVC_EXE ?= $(value CVC)
+CVC_EXE ?= cvc
+CVC64_EXE ?= $(value VERILATOR_CVC64)
+CVC64_EXE ?= $(value CVC64)
+CVC64_EXE ?= cvc64
+CVC_VERSION = $(shell $(CVC_EXE) -V 2>&1 | head -1)
 #cvc regular optimize -O
 CVC_FLAGS = $(COMMON_FLAGS) -O +verbose ../bench/bench.v
 #cvc regular -O +nbaopt
@@ -209,27 +222,27 @@ CVC_INTERP_FLAGS = $(COMMON_FLAGS) +verbose +interp ../bench/bench.v
 
 ALL_SIMS += cvc
 cvc: 
-	time $(CVC) $(CVC_FLAGS)
-	$(BENCHMARKER) "$(CVC) $(CVC_VERSION)" "cvcsim +CYCLES=%c"
+	time $(CVC_EXE) $(CVC_FLAGS)
+	$(BENCHMARKER) "$(CVC_EXE) $(CVC_VERSION)" "cvcsim +CYCLES=%c"
 
 cvc_nbaopt: 
-	time $(CVC) $(CVC_NBAOPT_FLAGS)
-	$(BENCHMARKER) "$(CVC) $(CVC_VERSION)" "cvcsim +CYCLES=%c"
+	time $(CVC_EXE) $(CVC_NBAOPT_FLAGS)
+	$(BENCHMARKER) "$(CVC_EXE) $(CVC_VERSION)" "cvcsim +CYCLES=%c"
 
 ALL_SIMS += cvc64
 cvc64: 
-	time $(CVC64) $(CVC_FLAGS)
-	$(BENCHMARKER) "$(CVC64) $(CVC_VERSION)" "cvcsim +CYCLES=%c"
+	time $(CVC64_EXE) $(CVC_FLAGS)
+	$(BENCHMARKER) "$(CVC64_EXE) $(CVC_VERSION)" "cvcsim +CYCLES=%c"
 
 cvc_nbaopt64: 
-	time $(CVC64) $(CVC_NBAOPT_FLAGS)
-	$(BENCHMARKER) "$(CVC64) $(CVC_VERSION)" "cvcsim +CYCLES=%c"
+	time $(CVC64_EXE) $(CVC_NBAOPT_FLAGS)
+	$(BENCHMARKER) "$(CVC64_EXE) $(CVC_VERSION)" "cvcsim +CYCLES=%c"
 
 cvc_interp: 
-	$(BENCHMARKER) "$(CVC) $(CVC_VERSION)" "$(CVC) $(CVC_INTERP_FLAGS) +CYCLES=%c"
+	$(BENCHMARKER) "$(CVC_EXE) $(CVC_VERSION)" "$(CVC_EXE) $(CVC_INTERP_FLAGS) +CYCLES=%c"
 
 cvc_interp64: 
-	$(BENCHMARKER) "$(CVC64) $(CVC_VERSION)" "$(CVC64) $(CVC_INTERP_FLAGS) +CYCLES=%c"
+	$(BENCHMARKER) "$(CVC64_EXE) $(CVC_VERSION)" "$(CVC64_EXE) $(CVC_INTERP_FLAGS) +CYCLES=%c"
 
 ######################################################################
 
@@ -242,5 +255,6 @@ help:
 
 maintainer-copy::
 clean mostlyclean distclean maintainer-clean::
-	-rm -rf obj_dir *.log *.dmp *.vpd simv* vcs.key csrc INCA_libs simi .vcsmx_rebuild
+	-$(RM) -rf obj_dir *.log *.dmp *.vpd simv* vcs.key csrc INCA_libs simi .vcsmx_rebuild ucli.key
+
 
