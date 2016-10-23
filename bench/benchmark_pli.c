@@ -6,7 +6,7 @@ int benchmark_pli(){
 
     acc_initialize();
     message = acc_fetch_tfarg_int(1);
-    printf("Benchmark PLI: %d", message);
+    printf("Benchmark PLI: %d\n", message);
     acc_close();
 
 }

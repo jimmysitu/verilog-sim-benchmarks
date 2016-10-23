@@ -10,6 +10,7 @@
 
 default: help
 
+CC := /usr/bin/gcc
 RM := /bin/rm
 PWD := $(shell pwd)
 BENCHMARKER := perl benchmarker
@@ -170,11 +171,12 @@ ICARUS_VERSION = $(shell $(ICARUS_EXE) -V 2>&1 | head -1)
 ICARUS_FLAGS = $(COMMON_FLAGS) \
 	-o simi \
 	../bench/bench.v
-ICARUS_GCC = /usr/bin/gcc
-ICARUS_GCC_FLAGS = -fPIC -shared -o benchmark_pli.so \
-				   -I../bench/include/nc \
-				   ../bench/benchmark_pli.c \
-				   ../bench/veriuser.c
+ICARUS_GCC = $(CC)
+ICARUS_GCC_PLIFLAGS = -fPIC -shared -o benchmark_pli.so \
+					  -DNC \
+					  -I../bench/include/nc \
+					  ../bench/veriuser.c \
+					  ../bench/benchmark_pli.c
 ICARUS_PLI_FLAGS = -cadpli=benchmark_pli.so:bootstrap
 
 ALL_SIMS += icarus
@@ -183,7 +185,7 @@ icarus:
 	$(BENCHMARKER) "icarus $(ICARUS_VERSION)" "./simi +CYCLES=%c"
 
 icarus_pli:
-	time $(ICARUS_GCC) $(ICARUS_GCC_FLAGS) 
+	time $(ICARUS_GCC) $(ICARUS_GCC_PLIFLAGS) 
 	time $(ICARUS_EXE) $(ICARUS_FLAGS) -DBENCHMARK_PLI
 	$(BENCHMARKER) "icarus $(ICARUS_VERSION)" "vvp -mcadpli ./simi $(ICARUS_PLI_FLAGS) +CYCLES=%c"
 
@@ -226,6 +228,12 @@ CVC64_EXE = cvc64
 CVC_VERSION = $(shell $(CVC_EXE) -V 2>&1 | head -1)
 #cvc regular optimize -O
 CVC_FLAGS = $(COMMON_FLAGS) -O +verbose ../bench/bench.v
+CVC_GCC = $(CC)
+CVC_GCC_PLIFLAGS = -fPIC -shared -o benchmark_pli.so \
+				   -DCVC \
+				   -I../bench/include/cvc \
+				   ../bench/veriuser.c \
+				   ../bench/benchmark_pli.c
 #cvc regular -O +nbaopt
 CVC_NBAOPT_FLAGS = $(COMMON_FLAGS) -O +nbaopt +verbose ../bench/bench.v
 CVC_2STATE_FLAGS = $(COMMON_FLAGS) -O +2state +verbose ../bench/bench.v
@@ -244,6 +252,11 @@ cvc_nbaopt:
 ALL_SIMS += cvc64
 cvc64: 
 	time $(CVC64_EXE) $(CVC_FLAGS)
+	$(BENCHMARKER) "$(CVC64_EXE) $(CVC_VERSION)" "./cvcsim +CYCLES=%c"
+
+cvc64_pli: 
+	time $(CVC_GCC) $(CVC_GCC_PLIFLAGS) 
+	time $(CVC64_EXE) $(CVC_FLAGS) +define+BENCHMARK_PLI +acc +loadpli1=./benchmark_pli.so:bootstrap
 	$(BENCHMARKER) "$(CVC64_EXE) $(CVC_VERSION)" "./cvcsim +CYCLES=%c"
 
 cvc_nbaopt64: 
