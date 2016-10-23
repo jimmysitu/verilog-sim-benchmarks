@@ -75,7 +75,7 @@ machine:
 
 ######################################################################
 
-VERILATOR_EXE = $(VERILATOR_ROOT)/bin/verilator
+VERILATOR_EXE = verilator
 VERILATOR_VERSION = $(shell $(VERILATOR_EXE) --version)
 VERILATOR_FLAGS  = $(COMMON_FLAGS) \
 	--cc ../bench/k68_soc_test.v --exe $(PWD)/../bench/bench.cpp  -prefix m68 -Wno-WIDTH \
@@ -97,7 +97,7 @@ m68.gprof:  vlt
 	gprof obj_dir/m68 > $@
 
 vlt-waves:
-	$(VERILATOR_ROOT)/bin/verilator --trace $(VLT_FLAGS)
+	$(VERILATOR_EXE) --trace $(VLT_FLAGS)
 	( cd obj_dir ; make -f m68.mk )
 	time obj_dir/m68 -l sim.log
 
@@ -165,16 +165,27 @@ nc-waves:
 
 ICARUS_EXE ?= $(value VERILATOR_IVERILOG)
 ICARUS_EXE ?= $(value IVERILOG)
-ICARUS_EXE ?= iverilog
+ICARUS_EXE = iverilog
 ICARUS_VERSION = $(shell $(ICARUS_EXE) -V 2>&1 | head -1)
 ICARUS_FLAGS = $(COMMON_FLAGS) \
 	-o simi \
 	../bench/bench.v
+ICARUS_GCC = /usr/bin/gcc
+ICARUS_GCC_FLAGS = -fPIC -shared -o benchmark_pli.so \
+				   -I../bench/include/nc \
+				   ../bench/benchmark_pli.c \
+				   ../bench/veriuser.c
+ICARUS_PLI_FLAGS = -cadpli=benchmark_pli.so:bootstrap
 
 ALL_SIMS += icarus
 icarus:
 	time $(ICARUS_EXE) $(ICARUS_FLAGS)
 	$(BENCHMARKER) "icarus $(ICARUS_VERSION)" "./simi +CYCLES=%c"
+
+icarus_pli:
+	time $(ICARUS_GCC) $(ICARUS_GCC_FLAGS) 
+	time $(ICARUS_EXE) $(ICARUS_FLAGS) -DBENCHMARK_PLI
+	$(BENCHMARKER) "icarus $(ICARUS_VERSION)" "vvp -mcadpli ./simi $(ICARUS_PLI_FLAGS) +CYCLES=%c"
 
 ######################################################################
 
@@ -208,35 +219,40 @@ cver:
 
 CVC_EXE ?= $(value VERILATOR_CVC)
 CVC_EXE ?= $(value CVC)
-CVC_EXE ?= cvc
+CVC_EXE = cvc
 CVC64_EXE ?= $(value VERILATOR_CVC64)
 CVC64_EXE ?= $(value CVC64)
-CVC64_EXE ?= cvc64
+CVC64_EXE = cvc64
 CVC_VERSION = $(shell $(CVC_EXE) -V 2>&1 | head -1)
 #cvc regular optimize -O
 CVC_FLAGS = $(COMMON_FLAGS) -O +verbose ../bench/bench.v
 #cvc regular -O +nbaopt
 CVC_NBAOPT_FLAGS = $(COMMON_FLAGS) -O +nbaopt +verbose ../bench/bench.v
+CVC_2STATE_FLAGS = $(COMMON_FLAGS) -O +2state +verbose ../bench/bench.v
 #cvc interpreter
 CVC_INTERP_FLAGS = $(COMMON_FLAGS) +verbose +interp ../bench/bench.v
 
 ALL_SIMS += cvc
 cvc: 
 	time $(CVC_EXE) $(CVC_FLAGS)
-	$(BENCHMARKER) "$(CVC_EXE) $(CVC_VERSION)" "cvcsim +CYCLES=%c"
+	$(BENCHMARKER) "$(CVC_EXE) $(CVC_VERSION)" "./cvcsim +CYCLES=%c"
 
 cvc_nbaopt: 
 	time $(CVC_EXE) $(CVC_NBAOPT_FLAGS)
-	$(BENCHMARKER) "$(CVC_EXE) $(CVC_VERSION)" "cvcsim +CYCLES=%c"
+	$(BENCHMARKER) "$(CVC_EXE) $(CVC_VERSION)" "./cvcsim +CYCLES=%c"
 
 ALL_SIMS += cvc64
 cvc64: 
 	time $(CVC64_EXE) $(CVC_FLAGS)
-	$(BENCHMARKER) "$(CVC64_EXE) $(CVC_VERSION)" "cvcsim +CYCLES=%c"
+	$(BENCHMARKER) "$(CVC64_EXE) $(CVC_VERSION)" "./cvcsim +CYCLES=%c"
 
 cvc_nbaopt64: 
 	time $(CVC64_EXE) $(CVC_NBAOPT_FLAGS)
-	$(BENCHMARKER) "$(CVC64_EXE) $(CVC_VERSION)" "cvcsim +CYCLES=%c"
+	$(BENCHMARKER) "$(CVC64_EXE) $(CVC_VERSION)" "./cvcsim +CYCLES=%c"
+
+cvc_2state64: 
+	time $(CVC64_EXE) $(CVC_2STATE_FLAGS)
+	$(BENCHMARKER) "$(CVC64_EXE) $(CVC_VERSION)" "./cvcsim +CYCLES=%c"
 
 cvc_interp: 
 	$(BENCHMARKER) "$(CVC_EXE) $(CVC_VERSION)" "$(CVC_EXE) $(CVC_INTERP_FLAGS) +CYCLES=%c"

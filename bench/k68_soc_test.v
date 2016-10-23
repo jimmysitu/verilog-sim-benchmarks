@@ -62,9 +62,16 @@ module k68_soc_test (/*AUTOARG*/
 	 sum <= {sum[24:0],sum[31:25]} ^ dat_o;
       end
    end
-   
 
-   k68_soc dut0 (
+`ifdef BENCHMARK_PLI
+   always @ (negedge clk ) begin
+       $display("k68_soc_test: Call a PLI");
+       // Sync with verilator PLI call method
+       $benchmark_pli(1);
+   end 
+`endif
+
+    k68_soc dut0 (
 		 .add_o(add_o),
 		 .dat_o(dat_o),
 		 .dat_i(dat_i),
