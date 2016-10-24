@@ -226,6 +226,7 @@ CVC64_EXE ?= $(value VERILATOR_CVC64)
 CVC64_EXE ?= $(value CVC64)
 CVC64_EXE = cvc64
 CVC_VERSION = $(shell $(CVC_EXE) -V 2>&1 | head -1)
+CVC64_VERSION = $(shell $(CVC64_EXE) -V 2>&1 | head -1)
 #cvc regular optimize -O
 CVC_FLAGS = $(COMMON_FLAGS) -O +verbose ../bench/bench.v
 CVC_GCC = $(CC)
@@ -252,20 +253,20 @@ cvc_nbaopt:
 ALL_SIMS += cvc64
 cvc64: 
 	time $(CVC64_EXE) $(CVC_FLAGS)
-	$(BENCHMARKER) "$(CVC64_EXE) $(CVC_VERSION)" "./cvcsim +CYCLES=%c"
+	$(BENCHMARKER) "$(CVC64_EXE) $(CVC64_VERSION)" "./cvcsim +CYCLES=%c"
 
 cvc64_pli: 
 	time $(CVC_GCC) $(CVC_GCC_PLIFLAGS) 
 	time $(CVC64_EXE) $(CVC_FLAGS) +define+BENCHMARK_PLI +acc +loadpli1=./benchmark_pli.so:bootstrap
-	$(BENCHMARKER) "$(CVC64_EXE) $(CVC_VERSION)" "./cvcsim +CYCLES=%c"
+	$(BENCHMARKER) "$(CVC64_EXE) $(CVC64_VERSION)" "./cvcsim +CYCLES=%c"
 
 cvc_nbaopt64: 
 	time $(CVC64_EXE) $(CVC_NBAOPT_FLAGS)
-	$(BENCHMARKER) "$(CVC64_EXE) $(CVC_VERSION)" "./cvcsim +CYCLES=%c"
+	$(BENCHMARKER) "$(CVC64_EXE) $(CVC64_VERSION)" "./cvcsim +CYCLES=%c"
 
 cvc_2state64: 
 	time $(CVC64_EXE) $(CVC_2STATE_FLAGS)
-	$(BENCHMARKER) "$(CVC64_EXE) $(CVC_VERSION)" "./cvcsim +CYCLES=%c"
+	$(BENCHMARKER) "$(CVC64_EXE) $(CVC64_VERSION)" "./cvcsim +CYCLES=%c"
 
 cvc_interp: 
 	$(BENCHMARKER) "$(CVC_EXE) $(CVC_VERSION)" "$(CVC_EXE) $(CVC_INTERP_FLAGS) +CYCLES=%c"
