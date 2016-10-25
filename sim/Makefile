@@ -16,6 +16,11 @@ PWD := $(shell pwd)
 BENCHMARKER := perl benchmarker
 
 COMMON_FLAGS = -f ../input.vc
+
+GCC_PLIFLAGS = -fPIC -shared -o benchmark_pli.so \
+			   ../bench/veriuser.c \
+			   ../bench/benchmark_pli.c
+
 VCOMP_FLAGS = $(COMMON_FLAGS) \
 	-o simvc \
 	$(wildcard ../bench/*.v) \
@@ -143,8 +148,12 @@ vcs-waves:
 
 NC_EXE ?= $(value VERILATOR_NCVERILOG)
 NC_EXE ?= $(value NCVERILOG)
-NC_EXE ?= ncverilog
+NC_EXE = ncverilog
 NC_VERSION = $(shell $(NC_EXE) -version)
+NC_GCC = $(CC)
+NC_GCC_PLIFLAGS = $(GCC_PLIFLAGS) \
+				  -DNC -I../bench/include/nc
+
 NC_FLAGS  = $(COMMON_FLAGS) \
 	+ncsimargs+-status +nowarn+LIBNOU -q ../bench/bench.v
 NC_RUN_FLAGS = -R
@@ -157,6 +166,11 @@ nc-32:
 ALL_SIMS += nc-64
 nc-64:
 	$(NC_EXE) $(NC_FLAGS) +nc64bit -c
+	$(BENCHMARKER) "$@ $(NC_VERSION)" "$(NC_EXE) $(NC_RUN_FLAGS) +CYCLES=%c +nc64bit"
+
+nc-64_pli:
+	$(NC_GCC) $(NC_GCC_PLIFLAGS) 
+	$(NC_EXE) $(NC_FLAGS) +nc64bit -c +define+BENCHMARK_PLI +acc +loadpli1=./benchmark_pli.so:bootstrap
 	$(BENCHMARKER) "$@ $(NC_VERSION)" "$(NC_EXE) $(NC_RUN_FLAGS) +CYCLES=%c +nc64bit"
 
 nc-waves:
@@ -172,11 +186,9 @@ ICARUS_FLAGS = $(COMMON_FLAGS) \
 	-o simi \
 	../bench/bench.v
 ICARUS_GCC = $(CC)
-ICARUS_GCC_PLIFLAGS = -fPIC -shared -o benchmark_pli.so \
-					  -DNC \
-					  -I../bench/include/nc \
-					  ../bench/veriuser.c \
-					  ../bench/benchmark_pli.c
+ICARUS_GCC_PLIFLAGS = $(GCC_PLIFLAGS) \
+					  -DNC -I../bench/include/nc
+
 ICARUS_PLI_FLAGS = -cadpli=benchmark_pli.so:bootstrap
 
 ALL_SIMS += icarus
@@ -229,11 +241,9 @@ CVC_VERSION = $(shell $(CVC_EXE) -V 2>&1 | head -1)
 #cvc regular optimize -O
 CVC_FLAGS = $(COMMON_FLAGS) -O +verbose ../bench/bench.v
 CVC_GCC = $(CC)
-CVC_GCC_PLIFLAGS = -fPIC -shared -o benchmark_pli.so \
-				   -DCVC \
-				   -I../bench/include/cvc \
-				   ../bench/veriuser.c \
-				   ../bench/benchmark_pli.c
+CVC_GCC_PLIFLAGS = $(GCC_PLIFLAGS) \
+				   -DCVC -I../bench/include/cvc
+
 #cvc regular -O +nbaopt
 CVC_NBAOPT_FLAGS = $(COMMON_FLAGS) -O +nbaopt +verbose ../bench/bench.v
 CVC_2STATE_FLAGS = $(COMMON_FLAGS) -O +2state +verbose ../bench/bench.v
