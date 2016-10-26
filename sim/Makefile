@@ -111,11 +111,14 @@ vlt-waves:
 
 VCS_EXE ?= $(value VERILATOR_VCS)
 VCS_EXE ?= $(value VCS)
-VCS_EXE ?= vcs
+VCS_EXE = vcs
 VCS_VERSION = $(shell $(VCS_EXE) -ID 2>&1 | grep 'version =')
 VCS_FLAGS = $(COMMON_FLAGS) \
 	+define+vcs+1 ../bench/bench.v
-
+VCS_GCC = $(CC)
+VCS_GCC_PLIFLAGS = -DVCS -P ../bench/vcs_pli.tab \
+				   ../bench/benchmark_pli.c
+				   
 ALL_SIMS += vcs-32-2state
 vcs-32-2state:
 	-$(RM) -rf csrc simv.daidir
@@ -138,6 +141,11 @@ ALL_SIMS += vcs-64-4state
 vcs-64-4state:
 	-$(RM) -rf csrc simv.daidir
 	$(VCS_EXE) $(VCS_FLAGS) -full64
+	$(BENCHMARKER) "$@ $(VCS_VERSION)" "./simv +CYCLES=%c"
+
+vcs-64-4state_pli:
+	-$(RM) -rf csrc simv.daidir
+	$(VCS_EXE) $(VCS_FLAGS) -full64 +define+BENCHMARK_PLI -cc $(VCS_GCC) $(VCS_GCC_PLIFLAGS) 
 	$(BENCHMARKER) "$@ $(VCS_VERSION)" "./simv +CYCLES=%c"
 
 vcs-waves:

@@ -65,9 +65,7 @@ module k68_soc_test (/*AUTOARG*/
 
 `ifdef BENCHMARK_PLI
    always @ (negedge clk ) begin
-       $display("k68_soc_test: Call a PLI");
-       // Sync with verilator PLI call method
-       $benchmark_pli(1);
+       $benchmark_pli(111, 222, 333);
    end 
 `endif
 
