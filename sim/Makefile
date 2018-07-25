@@ -88,7 +88,7 @@ VERILATOR_FLAGS  = $(COMMON_FLAGS) \
 	-O3 -x-assign 0
 
 ALL_SIMS += vlt-32
-vlt-32: 
+vlt-32:
 	$(VERILATOR_EXE) $(VERILATOR_FLAGS)
 	( cd obj_dir ; $(RM) *.o ; make -j -f m68.mk LDFLAGS=-m32 OPT_FAST="-m32 -O3" OPT_SLOW="-m32 -O3" )
 	$(BENCHMARKER) "$@ $(VERILATOR_VERSION)" "obj_dir/m68 %c"
@@ -96,6 +96,18 @@ vlt-32:
 ALL_SIMS += vlt-64
 vlt-64:
 	$(VERILATOR_EXE) $(VERILATOR_FLAGS)
+	( cd obj_dir ; $(RM) *.o ; make -j -f m68.mk LDFLAGS=-m64 OPT_FAST="-m64 -O3" OPT_SLOW="-m64 -O3" )
+	$(BENCHMARKER) "$@ $(VERILATOR_VERSION)" "obj_dir/m68 %c"
+
+ALL_SIMS += vlt-32-mt
+vlt-32-mt:
+	$(VERILATOR_EXE) --threads `nproc` $(VERILATOR_FLAGS)
+	( cd obj_dir ; $(RM) *.o ; make -j -f m68.mk LDFLAGS=-m32 OPT_FAST="-m32 -O3" OPT_SLOW="-m32 -O3" )
+	$(BENCHMARKER) "$@ $(VERILATOR_VERSION)" "obj_dir/m68 %c"
+
+ALL_SIMS += vlt-64-mt
+vlt-64-mt:
+	$(VERILATOR_EXE) --threads `nproc` $(VERILATOR_FLAGS)
 	( cd obj_dir ; $(RM) *.o ; make -j -f m68.mk LDFLAGS=-m64 OPT_FAST="-m64 -O3" OPT_SLOW="-m64 -O3" )
 	$(BENCHMARKER) "$@ $(VERILATOR_VERSION)" "obj_dir/m68 %c"
 
