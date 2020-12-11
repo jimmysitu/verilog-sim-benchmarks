@@ -223,6 +223,31 @@ icarus_pli:
 
 ######################################################################
 
+EPICSIM_EXE ?= $(value VERILATOR_EPICSIM)
+EPICSIM_EXE ?= $(value EPICSIM)
+EPICSIM_EXE = epicsim-driver
+EPICSIM_VERSION = $(shell $(EPICSIM_EXE) -V 2>&1 | head -1)
+EPICSIM_FLAGS = $(COMMON_FLAGS) \
+	-o simi \
+	../bench/bench.v
+EPICSIM_GCC = $(CC)
+EPICSIM_GCC_PLIFLAGS = $(GCC_PLIFLAGS) \
+					  -DNC -I../bench/include/nc
+
+EPICSIM_PLI_FLAGS = -cadpli=benchmark_pli.so:bootstrap
+
+ALL_SIMS += icarus
+epicsim:
+	time $(EPICSIM_EXE) $(EPICSIM_FLAGS)
+	$(BENCHMARKER) "epicsim $(EPICSIM_VERSION)" "./simi +CYCLES=%c"
+
+epicsim_pli:
+	time $(EPICSIM_GCC) $(EPICSIM_GCC_PLIFLAGS) 
+	time $(EPICSIM_EXE) $(EPICSIM_FLAGS) -DBENCHMARK_PLI
+	$(BENCHMARKER) "epicsim $(EPICSIM_VERSION)" "epicsim-vvp -mcadpli ./simi $(EPICSIM_PLI_FLAGS) +CYCLES=%c"
+
+######################################################################
+
 ALL_SIMS += vcomp
 vcomp:
 	time ~/src/verilator/vcomp-my/src/vcomp  $(VCOMP_FLAGS)
